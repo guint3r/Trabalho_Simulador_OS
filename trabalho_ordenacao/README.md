@@ -1,6 +1,6 @@
-# Trabalho: Mergesort × Quicksort
+# Trabalho: Mergesort bottom-up × Quicksort
 
-Benchmark em C++ que compara o tempo do Mergesort e do Quicksort com vetores de
+Benchmark em C++ que compara o tempo do **Mergesort bottom-up** (iterativo, sem recursão) e do Quicksort com vetores de
 **30, 300, 3.000, 30.000 e 300.000** inteiros, **20 execuções** por tamanho
 (5 × 20 × 2 = 200 ordenações). Inclui painel administrativo, relatório, slides e a
 divisão da apresentação de 15 minutos entre 5 pessoas.
@@ -33,6 +33,7 @@ trabalho_ordenacao/
 │   └── cenario_*/             resultados de cada cenário de entrada
 ├── apresentacao/
 │   ├── slides.pptx            14 slides; o roteiro de cada pessoa está nas anotações
+│   ├── estudo_mergesort_bottom_up.pdf   material de estudo do bottom-up
 │   └── divisao_trabalho.pdf   quem fala o quê, tempos, tarefas e checklist
 └── scripts/                   geradores do gráfico, do PDF e dos slides
 ```
@@ -47,6 +48,8 @@ trabalho_ordenacao/
 | 4 / 5 / 6 | Abre o relatório, os slides ou o PDF da divisão |
 | 7 | Compila de novo (use depois de mudar o código) |
 | 8 / 9 | Abre ou apaga a pasta de resultados (pede confirmação para apagar) |
+| 10 | Abre o material de estudo do Mergesort bottom-up (PDF) |
+| 11 | Mostra os resultados em tabelas detalhadas 5×5: média, desvio, mínimo e máximo de cada algoritmo, comparação e crescimento |
 
 ## Linha de comando
 
@@ -57,6 +60,7 @@ build\benchmark.exe                                  painel interativo
 build\benchmark.exe --rodar                          teste padrão, sem menu
 build\benchmark.exe --rodar --tamanhos 1000,10000 --execucoes 50 --semente 7
 build\benchmark.exe --rodar --cenario inverso --saida resultados\inverso --abrir
+build\benchmark.exe --tabela                         tabelas detalhadas da pasta resultados
 build\benchmark.exe --ajuda
 ```
 
@@ -79,6 +83,7 @@ Cada execução grava em `resultados/`:
 - Vetores pequenos ordenam mais rápido que a precisão do relógio. Por isso cada medição ordena
   k cópias e divide o tempo por k (k = 20.000 / n; para n ≥ 20.000, k = 1).
 - `std::is_sorted` confere todo resultado.
+- Mergesort bottom-up: blocos de 1, 2, 4, 8… intercalados em dois laços (⌈log₂ n⌉ passadas).
 - Quicksort: pivô por mediana de três + particionamento de Hoare, com recursão só no lado menor
   (pilha O(log n)).
 
@@ -91,6 +96,7 @@ g++ -O2 -std=c++11 -static src/benchmark.cpp -o build/benchmark.exe
 # Gráfico, PDF e slides (depois de rodar o benchmark e os 4 cenários)
 python scripts/grafico.py          # pip install matplotlib
 python scripts/gerar_pdf.py        # pip install reportlab
+python scripts/gerar_estudo.py     # pip install reportlab
 node scripts/gerar_slides.js       # npm install pptxgenjs react-icons react react-dom sharp
 ```
 

@@ -19,7 +19,7 @@ call :ACHAR_COMPILADOR
 cls
 echo.
 echo   ==================================================================
-echo      PAINEL ADM  -  Benchmark Mergesort x Quicksort
+echo      PAINEL ADM  -  Benchmark Mergesort bottom-up x Quicksort
 echo   ==================================================================
 echo.
 if defined GPP (echo   Compilador ...... !GPP!) else (echo   Compilador ...... NAO ENCONTRADO - veja a opcao 7)
@@ -35,6 +35,8 @@ echo   RESULTADOS E APRESENTACAO
 echo     [4] Abrir relatorio (navegador)
 echo     [5] Abrir slides da apresentacao
 echo     [6] Abrir divisao do trabalho (PDF)
+echo     [10] Abrir material de estudo: Mergesort bottom-up (PDF)
+echo     [11] Exibir resultados em tabela detalhada
 echo.
 echo   MANUTENCAO
 echo     [7] Compilar de novo  (use depois de mudar o codigo)
@@ -54,10 +56,43 @@ if "%OP%"=="6" goto DIVISAO
 if "%OP%"=="7" goto RECOMPILAR
 if "%OP%"=="8" goto PASTA
 if "%OP%"=="9" goto LIMPAR
+if "%OP%"=="10" goto ESTUDO
+if "%OP%"=="11" goto TABELA
 if "%OP%"=="0" goto FIM
 goto MENU
 
 REM -------------------------------------------------------------------------
+:TABELA
+if not exist "resultados\resultados_resumo.csv" (
+    echo.
+    echo   Nenhum resultado ainda. Use a opcao 2 primeiro.
+    echo.
+    pause
+    goto MENU
+)
+call :GARANTIR_PROGRAMA
+if errorlevel 1 goto MENU
+cls
+"%EXE%" --tabela
+echo.
+set "CEN="
+set /p "CEN=  Ver tambem a tabela de um cenario? (aleatorio/ordenado/inverso/repetidos ou ENTER para voltar): "
+if not defined CEN goto MENU
+if not exist "resultados\cenario_%CEN%\resultados_resumo.csv" (
+    echo   Cenario sem resultados. Use a opcao 3 primeiro.
+    pause
+    goto MENU
+)
+cls
+"%EXE%" --tabela --saida "resultados\cenario_%CEN%"
+echo.
+pause
+goto MENU
+
+:ESTUDO
+if exist "apresentacao\estudo_mergesort_bottom_up.pdf" (start "" "apresentacao\estudo_mergesort_bottom_up.pdf") else (echo. & echo   Arquivo apresentacao\estudo_mergesort_bottom_up.pdf nao encontrado. & pause)
+goto MENU
+
 :PAINEL
 call :GARANTIR_PROGRAMA
 if errorlevel 1 goto MENU

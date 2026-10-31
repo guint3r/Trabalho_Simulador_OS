@@ -121,12 +121,12 @@ async function diaADia(slide, x, y, w, h, texto) {
 
 // "Vetor": células com números (motivo dos algoritmos)
 const CW = 0.62, CH = 0.52, CG = 0.06, GG = 0.3;
-function larguraGrupos(grupos) {
+function larguraGrupos(grupos, gg = GG) {
   const cel = grupos.reduce((s, g) => s + g.length, 0);
-  return cel * CW + (cel - grupos.length) * CG + (grupos.length - 1) * GG;
+  return cel * CW + (cel - grupos.length) * CG + (grupos.length - 1) * gg;
 }
-function desenharVetor(slide, grupos, xCentro, y, estilo, nome) {
-  let x = xCentro - larguraGrupos(grupos) / 2;
+function desenharVetor(slide, grupos, xCentro, y, estilo, nome, gg = GG) {
+  let x = xCentro - larguraGrupos(grupos, gg) / 2;
   grupos.forEach((g, gi) => {
     g.forEach((v, i) => {
       const e = typeof estilo === "function" ? estilo(v, gi, i) : estilo;
@@ -137,7 +137,7 @@ function desenharVetor(slide, grupos, xCentro, y, estilo, nome) {
       });
       x += CW + (i < g.length - 1 ? CG : 0);
     });
-    x += GG;
+    x += gg;
   });
 }
 function rotuloLinha(slide, texto, y) {
@@ -164,7 +164,7 @@ async function main() {
   pres.addSection({ title: "Abertura" });
   let s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Abertura" });
   s.addText("Mergesort × Quicksort", { placeholder: "title" });
-  s.addText("Quem ordena mais rápido? Medimos 200 ordenações em C++", { placeholder: "body" });
+  s.addText("Mergesort bottom-up contra Quicksort: 200 ordenações em C++", { placeholder: "body" });
   s.addText("Juan  ·  Joao Vitor  ·  Jefferson  ·  Guilherme S  ·  Igor Jesus", { placeholder: "integrantes" });
   desenharVetor(s, [VETOR], 0.8 + larguraGrupos([VETOR]) / 2, 0.9, NEUTRO, "capa vetor");
   desenharVetor(s, [ORDENADO.slice(0, 4), ORDENADO.slice(4)], 0.8 + larguraGrupos([ORDENADO.slice(0, 4), ORDENADO.slice(4)]) / 2, 1.55, (v, g) => (g === 0 ? AZUL : LARANJA), "capa ordenado");
@@ -226,35 +226,36 @@ async function main() {
 
   // ===== 4. Mergesort: como funciona
   pres.addSection({ title: "Mergesort" });
-  s = conteudo("Mergesort", "Mergesort: divide, depois junta", 2);
+  s = conteudo("Mergesort", "Bottom-up: junta de baixo para cima", 2);
   {
-    const xc = 2.65 + 6.3 / 2;
+    const xc = 2.75 + 6.2 / 2;
     const linhas = [
-      ["vetor", [VETOR], NEUTRO],
-      ["dividir", [[38, 27, 43, 3], [9, 82, 10, 15]], NEUTRO],
-      ["dividir", [[38, 27], [43, 3], [9, 82], [10, 15]], NEUTRO],
-      ["juntar", [[27, 38], [3, 43], [9, 82], [10, 15]], AZUL],
-      ["juntar", [[3, 27, 38, 43], [9, 10, 15, 82]], AZUL],
-      ["pronto", [ORDENADO], AZUL],
+      ["blocos de 1", VETOR.map((v) => [v]), NEUTRO, 0.13],
+      ["blocos de 2", [[27, 38], [3, 43], [9, 82], [10, 15]], AZUL, GG],
+      ["blocos de 4", [[3, 27, 38, 43], [9, 10, 15, 82]], AZUL, GG],
+      ["blocos de 8", [ORDENADO], AZUL, GG],
     ];
-    linhas.forEach(([rot, grupos, est], i) => {
-      const y = 1.6 + i * 0.84;
+    linhas.forEach(([rot, grupos, est, gg], i) => {
+      const y = 1.7 + i * 1.05;
       rotuloLinha(s, rot, y);
-      desenharVetor(s, grupos, xc, y, est, `merge linha ${i + 1}`);
+      desenharVetor(s, grupos, xc, y, est, `merge linha ${i + 1}`, gg);
     });
   }
+  s.addText("Sem recursão: dois laços. O bloco dobra a cada passada.", {
+    x: 0.6, y: 5.75, w: 8.4, h: 0.8, fontSize: 20, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "nota bottom-up",
+  });
   await diaADia(s, 9.25, 1.6, 3.48, 4.95,
-    "Arrumar um baralho: divida em montinhos de 1 carta e vá juntando dois montes já arrumados, olhando só a carta de cima de cada um.");
+    "Torneio de chaves: primeiro jogam as duplas, depois os vencedores formam quartetos, depois grupos de 8, até sobrar um campeão.");
   s.addNotes(
-    "PESSOA 2 (2:30 a 5:00). O Mergesort corta o vetor ao meio até sobrar um elemento em cada pedaço, que já está ordenado. " +
-      "Depois junta os pedaços dois a dois: compara o primeiro de cada um e pega o menor. Cinza é dividir, azul é juntar. " +
-      "No código: funções mergesortRec e intercalar."
+    "PESSOA 2 (2:30 a 5:00). Usamos o Mergesort bottom-up, de baixo para cima. Ele não divide nada: trata cada elemento como um bloco de 1, " +
+      "que já está ordenado, e intercala blocos vizinhos. Primeiro forma blocos de 2, depois de 4, depois de 8, dobrando a cada passada. " +
+      "Intercalar é comparar o primeiro de cada bloco e pegar o menor. Não tem recursão, são só dois laços. No código: funções mergesort e intercalar."
   );
 
   // ===== 5. Mergesort: custo
   s = conteudo("Mergesort", "Mergesort: previsível e estável", 2);
   const custosM = [
-    [fa.FaClock, "Sempre n log n", "300.000 itens: só 19 níveis de divisão, em qualquer caso."],
+    [fa.FaClock, "Sempre n log n", "300.000 itens: só 19 passadas, em qualquer caso."],
     [fa.FaMemory, "Gasta memória", "Vetor extra do mesmo tamanho: ~1,2 MB para 300.000 números."],
     [fa.FaBalanceScale, "Estável", "Itens iguais mantêm a ordem em que chegaram."],
   ];
@@ -273,7 +274,7 @@ async function main() {
     x: 0.6, y: 5.75, w: 8.8, h: 0.8, fontSize: 24, bold: true, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "resumo merge",
   });
   s.addNotes(
-    "PESSOA 2. Como o vetor é cortado ao meio, são log de n níveis: para 300 mil, 19. Em cada nível passa por todos os elementos: n log n, sempre. " +
+    "PESSOA 2. Como a largura do bloco dobra a cada passada, são log de n passadas: para 300 mil, 19. Cada passada percorre todos os elementos: n log n, sempre. " +
       "O preço é memória: um vetor auxiliar do mesmo tamanho. E é estável: itens iguais não trocam de ordem. Agora a Pessoa 3 com o Quicksort."
   );
 
@@ -406,7 +407,7 @@ async function main() {
   pres.addSection({ title: "Resultados" });
   s = conteudo("Resultados", `Quicksort foi ${GANHO}% mais rápido`, 5);
   const cab = (t, al = "right") => ({ text: t, options: { bold: true, color: C.text1, fill: { color: T.lt2 }, align: al } });
-  const linhasTab = [[cab("Itens", "left"), cab("Merge (ms)"), cab("Quick (ms)"), cab("Quick foi")]];
+  const linhasTab = [[cab("Itens", "left"), cab("Merge"), cab("Quick"), cab("Dif."), cab("Ganho")]];
   NS.forEach((n) => {
     const dest = n === 300000;
     const ruido = n <= 300;
@@ -415,11 +416,12 @@ async function main() {
       { text: milhar(n), options: o("left") },
       { text: ms(m(n)), options: o() },
       { text: ms(q(n)), options: o() },
-      { text: ruido ? "varia muito" : comp(n), options: o() },
+      { text: ms(Math.abs(m(n) - q(n))), options: o() },
+      { text: ruido ? "varia muito" : Math.abs(ganho(n)) < 3 ? "empate" : `${num(ganho(n), 0)}%`, options: o() },
     ]);
   });
   s.addTable(linhasTab, {
-    x: 0.6, y: 1.6, w: 7.7, colW: [1.7, 1.9, 1.9, 2.2], rowH: 0.66, fontSize: 20, fontFace: THEME.bodyFontFace,
+    x: 0.6, y: 1.6, w: 7.8, colW: [1.5, 1.45, 1.45, 1.45, 1.95], rowH: 0.66, fontSize: 20, fontFace: THEME.bodyFontFace,
     valign: "middle", border: { type: "solid", pt: 1, color: BORDA }, margin: [0, 0.15, 0, 0.15], objectName: "tabela resultados",
   });
   cartao(s, 8.7, 1.6, 4.03, 2.35, "destaque ganho", { fill: T.accent2, line: T.accent2 });
@@ -428,8 +430,8 @@ async function main() {
     { text: `${ms(q(300000))} ms contra ${ms(m(300000))} ms`, options: { fontSize: 20, bold: true, color: T.lt1 } },
   ], { x: 8.95, y: 1.7, w: 3.55, h: 2.15, valign: "middle", margin: 0, isTextBox: true, objectName: "texto ganho" });
   await diaADia(s, 8.7, 4.2, 4.03, 2.4, "Os dois ordenam 300.000 números em 1/3 de uma piscada de olho.");
-  s.addText("30 e 300 itens levam microssegundos: ali a % muda a cada rodada.", {
-    x: 0.6, y: 5.75, w: 7.7, h: 0.8, fontSize: 20, color: C.text2, valign: "top", margin: 0, isTextBox: true, objectName: "nota tabela",
+  s.addText("Tempos em ms. Ganho = quanto o Quick foi mais rápido. 30 e 300 itens variam a cada rodada.", {
+    x: 0.6, y: 5.75, w: 7.8, h: 0.8, fontSize: 20, color: C.text2, valign: "top", margin: 0, isTextBox: true, objectName: "nota tabela",
   });
   s.addNotes(
     `PESSOA 5 (10:30 a 13:30). Nos tamanhos que importam o Quicksort ganhou sempre: ${GANHO}% com 300 mil itens, ` +
@@ -440,7 +442,7 @@ async function main() {
   // ===== 11. Crescimento
   s = conteudo("Resultados", `10× mais dados, ~${num(razaoM, 0)}× mais tempo`, 5);
   s.addChart(pres.charts.LINE, [
-    { name: "Mergesort", labels: NS.map(milhar), values: NS.map(m) },
+    { name: "Mergesort bottom-up", labels: NS.map(milhar), values: NS.map(m) },
     { name: "Quicksort", labels: NS.map(milhar), values: NS.map(q) },
   ], {
     x: 0.6, y: 1.5, w: 7.6, h: 5.15, chartColors: [T.accent1, T.accent2], lineSize: 4, lineDataSymbol: "circle", lineDataSymbolSize: 11,
@@ -474,7 +476,7 @@ async function main() {
     s = conteudo("Resultados", "Quicksort venceu nas 4 entradas", 5);
     const labels = CENARIOS.map((c) => ROT_CEN[c]);
     s.addChart(pres.charts.BAR, [
-      { name: "Mergesort", labels, values: CENARIOS.map((c) => cen(c, "mergesort")) },
+      { name: "Mergesort bottom-up", labels, values: CENARIOS.map((c) => cen(c, "mergesort")) },
       { name: "Quicksort", labels, values: CENARIOS.map((c) => cen(c, "quicksort")) },
     ], {
       x: 0.6, y: 1.5, w: 7.6, h: 5.15, barDir: "col", barGrouping: "clustered", barGapWidthPct: 55, chartColors: [T.accent1, T.accent2],
@@ -506,7 +508,7 @@ async function main() {
   s = conteudo("Conclusão", "Qual usar? Depende do objetivo", 5);
   const colunas = [
     ["Quicksort", T.accent2, fa.FaBolt, "Quer velocidade", [`${GANHO}% mais rápido aqui`, "Quase sem memória extra", "Precisa de um bom pivô"], "Carro esportivo: mais rápido, mas pede estrada boa."],
-    ["Mergesort", T.accent1, fa.FaShieldAlt, "Quer garantia", ["n log n até no pior caso", "Estável (mantém a ordem)", "Bom para arquivos enormes"], "Ônibus no horário: nunca surpreende."],
+    ["Mergesort", T.accent1, fa.FaShieldAlt, "Quer garantia", ["n log n até no pior caso", "Estável (mantém a ordem)", "Bottom-up: sem recursão"], "Ônibus no horário: nunca surpreende."],
   ];
   for (let i = 0; i < colunas.length; i++) {
     const [nome, cor, Ic, quando, itens, frase] = colunas[i];
@@ -534,7 +536,7 @@ async function main() {
   // ===== 14. Perguntas
   s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Conclusão" });
   s.addText("Perguntas?", { placeholder: "title" });
-  s.addText(`Quick: ${GANHO}% mais rápido  ·  Merge: tempo garantido`, { placeholder: "body" });
+  s.addText(`Quick: ${GANHO}% mais rápido  ·  Merge bottom-up: tempo garantido`, { placeholder: "body" });
   s.addText("Tudo na pasta trabalho_ordenacao  ·  PAINEL_ADM.bat", { placeholder: "integrantes" });
   desenharVetor(s, [ORDENADO.slice(0, 4), ORDENADO.slice(4)], 0.8 + larguraGrupos([ORDENADO.slice(0, 4), ORDENADO.slice(4)]) / 2, 1.3, (v, g) => (g === 0 ? AZUL : LARANJA), "final");
   s.addNotes("TODOS (13:30 a 15:00). Cada um responde sobre a própria parte. A Pessoa 5 conduz.");

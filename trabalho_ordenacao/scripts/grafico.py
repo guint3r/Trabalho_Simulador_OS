@@ -19,13 +19,13 @@ with open(os.path.join(RES, "resultados_resumo.csv")) as f:
 fig, ax = plt.subplots(figsize=(7, 4.2), dpi=200)
 for nome, pts in dados.items():
     ns = [p[0] for p in pts]; med = [p[1] for p in pts]; dp = [p[2] for p in pts]
-    ax.plot(ns, med, color=CORES[nome], lw=2, marker="o", ms=6, label=nome.capitalize())
+    ax.plot(ns, med, color=CORES[nome], lw=2, marker="o", ms=6, label="Mergesort bottom-up" if nome == "mergesort" else "Quicksort")
     ax.annotate(f"{med[-1]:.1f} ms", (ns[-1], med[-1]), xytext=(8, -4 if nome == "quicksort" else 4),
                 textcoords="offset points", color="#52514e", fontsize=9)
 ax.set_xscale("log"); ax.set_yscale("log")
 ax.set_xlabel("Tamanho do vetor (n)", color="#52514e")
 ax.set_ylabel("Tempo médio (ms) — escala log", color="#52514e")
-ax.set_title("Mergesort x Quicksort — média de 20 execuções", loc="left", fontsize=11)
+ax.set_title("Mergesort bottom-up x Quicksort — média de 20 execuções", loc="left", fontsize=11)
 ax.set_xticks([30, 300, 3000, 30000, 300000], ["30", "300", "3.000", "30.000", "300.000"])
 ax.set_xlim(20, 900000)
 ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}"))

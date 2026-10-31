@@ -44,13 +44,18 @@
 
 using namespace std;
 
-static const char* VERSAO = "1.0";
+static const char* VERSAO = "2.0";
 
 // =============================================================================
 //  Algoritmos
 // =============================================================================
 
-// ---- Mergesort: divide ao meio, ordena cada metade, intercala com vetor auxiliar
+// ---- Mergesort BOTTOM-UP (iterativo, sem recursão)
+//      Começa com blocos de 1 elemento (já ordenados) e intercala blocos vizinhos:
+//      largura 1 -> blocos de 2, largura 2 -> blocos de 4, ... até cobrir o vetor.
+//      São ceil(log2 n) passadas; cada passada percorre os n elementos: O(n log n).
+
+// Intercala v[ini..meio) e v[meio..fim), os dois já ordenados, usando aux.
 static void intercalar(vector<int>& v, vector<int>& aux, int ini, int meio, int fim) {
     int i = ini, j = meio, k = ini;
     while (i < meio && j < fim) aux[k++] = (v[i] <= v[j]) ? v[i++] : v[j++];
@@ -59,17 +64,17 @@ static void intercalar(vector<int>& v, vector<int>& aux, int ini, int meio, int 
     for (int t = ini; t < fim; t++) v[t] = aux[t];
 }
 
-static void mergesortRec(vector<int>& v, vector<int>& aux, int ini, int fim) {  // [ini, fim)
-    if (fim - ini < 2) return;
-    int meio = ini + (fim - ini) / 2;
-    mergesortRec(v, aux, ini, meio);
-    mergesortRec(v, aux, meio, fim);
-    intercalar(v, aux, ini, meio, fim);
-}
-
 void mergesort(vector<int>& v) {
-    vector<int> aux(v.size());
-    mergesortRec(v, aux, 0, (int)v.size());
+    int n = (int)v.size();
+    vector<int> aux(n);
+    for (int largura = 1; largura < n; largura *= 2) {          // 1, 2, 4, 8, ...
+        for (int ini = 0; ini < n - largura; ini += 2 * largura) {  // pares de blocos vizinhos
+            int meio = ini + largura;                               // início do 2º bloco
+            int fim = min(ini + 2 * largura, n);                    // o último bloco pode ser menor
+            intercalar(v, aux, ini, meio, fim);
+        }
+        // Um bloco que sobra sem par já está ordenado e entra na próxima passada.
+    }
 }
 
 // ---- Quicksort: pivô = mediana de três (início, meio, fim), particionamento de Hoare.
@@ -450,7 +455,7 @@ static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, 
     svg << "<text class='eixo' x='" << (L + W - R) / 2 << "' y='" << H - 8 << "' text-anchor='middle'>tamanho do vetor (n), escala log</text>";
     svg << "<text class='eixo' transform='translate(16 " << (T + H - B) / 2 << ") rotate(-90)' text-anchor='middle'>tempo médio (ms), escala log</text>";
     const char* nomes[] = {"mergesort", "quicksort"};
-    const char* rotulos[] = {"Mergesort", "Quicksort"};
+    const char* rotulos[] = {"Mergesort bottom-up", "Quicksort"};
     for (int a = 0; a < 2; a++) {
         stringstream pts;
         double ux = 0, uy = 0, um = 0;
@@ -484,14 +489,14 @@ static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, 
       << "svg{width:100%;height:auto}.grade{stroke:var(--linha)}.eixo{fill:var(--suave);font-size:12px}.rotulo{fill:var(--tinta);font-size:12px}"
       << ".s0{stroke:var(--s0)}.s1{stroke:var(--s1)}.p0{fill:var(--s0)}.p1{fill:var(--s1)}circle{stroke:var(--cartao);stroke-width:2}"
       << ".tabela{overflow-x:auto}footer{color:var(--suave);font-size:12px;margin-top:28px}</style></head><body><main>"
-      << "<h1>Mergesort × Quicksort</h1><p class='sub'>Relatório gerado em " << agora() << "</p>"
+      << "<h1>Mergesort bottom-up × Quicksort</h1><p class='sub'>Relatório gerado em " << agora() << "</p>"
       << "<div class='cartao meta'>"
       << "<div><b>" << milhar((long long)cfg.tamanhos.size() * cfg.execucoes * 2) << "</b>ordenações</div>"
       << "<div><b>" << cfg.execucoes << "</b>execuções por tamanho</div>"
       << "<div><b>" << cfg.cenario << "</b>cenário de entrada</div>"
       << "<div><b>" << cfg.semente << "</b>semente</div>"
       << "<div><b>" << fmt(totalSeg, 2) << " s</b>tempo total</div></div>"
-      << "<h2>Tempo médio por tamanho</h2><div class='cartao'><div class='leg'><span><i style='background:var(--s0)'></i>Mergesort</span>"
+      << "<h2>Tempo médio por tamanho</h2><div class='cartao'><div class='leg'><span><i style='background:var(--s0)'></i>Mergesort bottom-up</span>"
       << "<span><i style='background:var(--s1)'></i>Quicksort</span></div>" << svg.str() << "</div>"
       << "<h2>Tabela</h2><div class='cartao tabela'><table><thead><tr><th>n</th><th>Mergesort média (ms)</th><th>desvio</th>"
       << "<th>Quicksort média (ms)</th><th>desvio</th><th>Quicksort vs Mergesort</th></tr></thead><tbody>";
@@ -514,7 +519,7 @@ static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, 
 static void cabecalho(const Config& c) {
     limparTela();
     cout << "  ==================================================================\n"
-         << "     BENCHMARK DE ORDENAÇÃO  ·  Mergesort × Quicksort  ·  v" << VERSAO << "\n"
+         << "     BENCHMARK DE ORDENAÇÃO  ·  Mergesort bottom-up × Quicksort  ·  v" << VERSAO << "\n"
          << "     Painel administrativo\n"
          << "  ==================================================================\n\n"
          << "  Configuração atual\n"
@@ -533,6 +538,93 @@ static void mostrarArquivo(const string& caminho, const string& vazio) {
     while (getline(f, linha)) cout << "  " << linha << "\n";
 }
 
+// ---- Tabelas detalhadas (lidas de resultados_resumo.csv)
+static size_t larguraTela(const string& s) {  // conta caracteres, não bytes (UTF-8)
+    size_t n = 0;
+    for (unsigned char c : s) if ((c & 0xC0) != 0x80) n++;
+    return n;
+}
+
+static void imprimirTabela(const string& titulo, const vector<string>& cab, const vector<vector<string> >& linhas) {
+    vector<size_t> w(cab.size());
+    for (size_t c = 0; c < cab.size(); c++) {
+        w[c] = larguraTela(cab[c]);
+        for (const vector<string>& l : linhas) w[c] = max(w[c], larguraTela(l[c]));
+    }
+    string sep = "  +";
+    for (size_t c = 0; c < w.size(); c++) sep += string(w[c] + 2, '-') + "+";
+    auto linha = [&](const vector<string>& l) {
+        string r = "  |";
+        for (size_t c = 0; c < l.size(); c++) {
+            string pad(w[c] - larguraTela(l[c]), ' ');
+            r += " " + (c == 0 ? l[c] + pad : pad + l[c]) + " |";  // 1ª coluna à esquerda, números à direita
+        }
+        return r;
+    };
+    cout << "\n  " << titulo << "\n" << sep << "\n" << linha(cab) << "\n" << sep << "\n";
+    for (const vector<string>& l : linhas) cout << linha(l) << "\n";
+    cout << sep << "\n";
+}
+
+static bool lerResumoCsv(const string& pasta, vector<Resumo>& m, vector<Resumo>& q) {
+    ifstream f((pasta + "/resultados_resumo.csv").c_str());
+    if (!f) return false;
+    string linha;
+    getline(f, linha);  // cabeçalho
+    while (getline(f, linha)) {
+        if (!linha.empty() && linha.back() == '\r') linha.pop_back();
+        stringstream ss(linha);
+        string campo;
+        vector<string> c;
+        while (getline(ss, campo, ',')) c.push_back(campo);
+        if (c.size() < 6) continue;
+        Resumo r;
+        r.algoritmo = c[0];
+        r.n = atoi(c[1].c_str());
+        r.media = atof(c[2].c_str()); r.desvio = atof(c[3].c_str());
+        r.minimo = atof(c[4].c_str()); r.maximo = atof(c[5].c_str());
+        (r.algoritmo == "mergesort" ? m : q).push_back(r);
+    }
+    return !m.empty() && m.size() == q.size();
+}
+
+static string fmtMs(double v);
+static string fmt(double v, int casas);
+
+static int mostrarTabelas(const string& pasta) {
+    vector<Resumo> m, q;
+    if (!lerResumoCsv(pasta, m, q)) {
+        cout << "\n  Nenhum resultado em \"" << pasta << "\". Rode o benchmark primeiro.\n";
+        return 1;
+    }
+    cout << "\n  RESULTADOS DETALHADOS  (pasta: " << pasta << ", tempos em milissegundos)\n";
+    const char* nomes[] = {"1) Mergesort bottom-up", "2) Quicksort"};
+    for (int a = 0; a < 2; a++) {
+        const vector<Resumo>& v = a == 0 ? m : q;
+        vector<vector<string> > l;
+        for (const Resumo& r : v) l.push_back({milhar(r.n), fmtMs(r.media), fmtMs(r.desvio), fmtMs(r.minimo), fmtMs(r.maximo)});
+        imprimirTabela(nomes[a], {"Itens (n)", "Média", "Desvio", "Mínimo", "Máximo"}, l);
+    }
+    vector<vector<string> > comp, cres;
+    for (size_t i = 0; i < m.size(); i++) {
+        double dif = (m[i].media - q[i].media) / m[i].media * 100.0;
+        string venc = fabs(dif) < 3 ? "empate" : dif > 0 ? "Quicksort" : "Mergesort";
+        comp.push_back({milhar(m[i].n), fmtMs(m[i].media), fmtMs(q[i].media), fmt(fabs(dif), 0) + "%", venc});
+        string xm = i ? fmt(m[i].media / m[i - 1].media, 1) + "x" : "-";
+        string xq = i ? fmt(q[i].media / q[i - 1].media, 1) + "x" : "-";
+        string xn = i ? fmt((double)m[i].n / m[i - 1].n, 0) + "x" : "-";
+        auto nlogn = [](int n) { return n * log2((double)max(2, n)); };
+        string xp = i ? fmt(nlogn(m[i].n) / nlogn(m[i - 1].n), 1) + "x" : "-";  // previsto pela teoria
+        cres.push_back({milhar(m[i].n), xn, xp, xm, xq});
+    }
+    imprimirTabela("3) Comparação", {"Itens (n)", "Merge", "Quick", "Diferença", "Mais rápido"}, comp);
+    imprimirTabela("4) Crescimento em relação à linha anterior", {"Itens (n)", "Dados", "Previsto", "Merge", "Quick"}, cres);
+    cout << "\n  Leitura: \"Previsto\" é quanto o tempo deveria crescer por n log n. Merge e Quick\n"
+         << "  perto do previsto = comportamento n log n. Um algoritmo n² cresceria 100x.\n"
+         << "  Abaixo de 3.000 itens os tempos são de microssegundos e variam a cada rodada.\n";
+    return 0;
+}
+
 static void menu(Config cfg) {
     while (true) {
         cabecalho(cfg);
@@ -542,7 +634,7 @@ static void menu(Config cfg) {
              << "  [4] Alterar semente aleatória\n"
              << "  [5] Alterar cenário de entrada\n"
              << "  [6] Restaurar configuração padrão do trabalho\n"
-             << "  [7] Ver último resumo (CSV)\n"
+             << "  [7] Ver resultados em tabelas detalhadas\n"
              << "  [8] Abrir relatório no navegador\n"
              << "  [9] Ver histórico de execuções\n"
              << "  [0] Sair\n\n";
@@ -589,8 +681,7 @@ static void menu(Config cfg) {
             cfg = configPadrao();
             cfg.saida = saida;
         } else if (op == "7") {
-            cout << "\n";
-            mostrarArquivo(cfg.saida + "/resultados_resumo.csv", "Nenhum resultado ainda. Use a opção [1].");
+            mostrarTabelas(cfg.saida);
             pausar();
         } else if (op == "8") {
             ifstream f((cfg.saida + "/relatorio.html").c_str());
@@ -622,6 +713,7 @@ static void ajuda() {
          << "  --cenario NOME      aleatorio | ordenado | inverso | repetidos\n"
          << "  --saida PASTA       pasta dos resultados      (padrão: resultados)\n"
          << "  --abrir             abre o relatório no navegador ao terminar\n"
+         << "  --tabela            mostra os resultados da pasta em tabelas detalhadas\n"
          << "  --ajuda             mostra esta mensagem\n"
          << "  --versao            mostra a versão\n\n"
          << "Códigos de saída: 0 ok, 1 argumento inválido, 2 erro de escrita, 3 falha na verificação.\n";
@@ -640,7 +732,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    bool rodar = false, abrir = false;
+    bool rodar = false, abrir = false, tabela = false;
     for (int i = 1; i < argc; i++) {
         string a = argv[i];
         auto valor = [&](const char* nome) -> string {
@@ -651,6 +743,7 @@ int main(int argc, char** argv) {
         else if (a == "--versao" || a == "--version") { cout << VERSAO << "\n"; return 0; }
         else if (a == "--rodar") rodar = true;
         else if (a == "--abrir") abrir = true;
+        else if (a == "--tabela") tabela = true;
         else if (a == "--tamanhos") {
             string erro;
             if (!lerTamanhos(valor("--tamanhos"), cfg.tamanhos, erro)) { cerr << "--tamanhos: " << erro << "\n"; return 1; }
@@ -665,6 +758,7 @@ int main(int argc, char** argv) {
         } else if (a == "--saida") cfg.saida = valor("--saida");
         else { cerr << "Opção desconhecida: " << a << "  (use --ajuda)\n"; return 1; }
     }
+    if (tabela && !rodar) return mostrarTabelas(cfg.saida);
     if (!rodar) { ajuda(); return 1; }
     int rc = executar(cfg, true);
     if (rc == 0 && abrir) abrirArquivo(cfg.saida + "/relatorio.html");

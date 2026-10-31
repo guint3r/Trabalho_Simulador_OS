@@ -60,7 +60,7 @@ historia = []
 H = historia.append
 
 # ---------- Pagina 1: visao geral ----------
-H(P("Mergesort × Quicksort", titulo))
+H(P("Mergesort bottom-up × Quicksort", titulo))
 H(P("Plano da apresentação — divisão do trabalho entre 5 pessoas · 15 minutos", sub))
 H(Spacer(1, 10))
 H(P("<b>O trabalho:</b> implementar Mergesort e Quicksort em C++, medir o tempo de cada um com vetores de "
@@ -87,7 +87,7 @@ H(P("Linha condutora (o que a plateia deve levar para casa)", h1))
 historia.extend(bullets([
     "Os dois algoritmos são O(n log n) no caso médio, e as medições confirmam: a cada vez que n cresce 10×, "
     "o tempo cresce um pouco mais que 10× (o fator log n).",
-    "O Quicksort foi ~15% mais rápido nos tamanhos grandes, porque troca elementos no próprio vetor "
+    "O Quicksort foi ~5% a 10% mais rápido nos tamanhos grandes, porque troca elementos no próprio vetor "
     "(melhor uso de cache) e não precisa copiar para um vetor auxiliar.",
     "O Mergesort ganha em garantia: é O(n log n) mesmo no pior caso e é estável. O Quicksort pode cair para "
     "O(n²) com pivô ruim, e por isso usamos a mediana de três.",
@@ -111,16 +111,17 @@ pessoas = [
         "Colocar os nomes do grupo no slide 1.",
         "Controlar o tempo no ensaio (cada bloco tem horário de início na tabela da página 1).",
     ]),
-    ("Pessoa 2 — Mergesort", "2:30 – 5:00 · slides 4 e 5", AZUL, [
-        "<b>Slide 4:</b> ideia de dividir e conquistar: divide o vetor ao meio até sobrar 1 elemento e "
-        "intercala (merge) as metades ordenadas. Mostrar um exemplo com 8 números desenhado passo a passo.",
+    ("Pessoa 2 — Mergesort bottom-up", "2:30 – 5:00 · slides 4 e 5", AZUL, [
+        "<b>Slide 4:</b> bottom-up: começa com blocos de 1 elemento e intercala blocos vizinhos, dobrando a "
+        "largura a cada passada (2, 4, 8…). Sem recursão. Explicar o diagrama com os 8 números.",
         "<b>Slide 5:</b> complexidade: O(n log n) no melhor, médio e pior caso; memória extra O(n) "
         "(vetor auxiliar, ~1,2 MB para 300.000 inteiros); algoritmo estável.",
     ], [
-        "Estudar as funções <font name='DVM'>merge</font> e <font name='DVM'>mergesortRec</font> em "
+        "Ler o material de estudo <font name='DVM'>apresentacao/estudo_mergesort_bottom_up.pdf</font> "
+        "(ou PAINEL_ADM.bat, opção [10]): tem o passo a passo, o código comentado e as perguntas da banca.",
+        "Estudar as funções <font name='DVM'>mergesort</font> e <font name='DVM'>intercalar</font> em "
         "<font name='DVM'>benchmark.cpp</font>.",
-        "O diagrama do exemplo já está no slide 4: treinar a explicação linha por linha.",
-        "Preparar resposta para: “por que log n níveis?”.",
+        "Preparar resposta para: “qual a diferença entre bottom-up e top-down?” e “por que log n passadas?”.",
     ]),
     ("Pessoa 3 — Quicksort", "5:00 – 7:30 · slides 6 e 7", LARANJA, [
         "<b>Slide 6:</b> ideia: escolhe um pivô, separa menores à esquerda e maiores à direita "
@@ -152,7 +153,7 @@ pessoas = [
         "Mergesort quando precisa de garantia de pior caso ou estabilidade).",
     ], [
         "Se os números mudarem no teste final, atualizar a tabela e os gráficos dos slides 10 a 12.",
-        "Treinar a explicação do crescimento: 10× mais dados → ~12× mais tempo (n log n).",
+        "Treinar a explicação do crescimento: 10× mais dados → ~12 a 13× mais tempo (n log n). A opção [11] do painel mostra as tabelas.",
         "Conduzir a rodada de perguntas (slide 14).",
     ]),
 ]
@@ -169,7 +170,7 @@ H(P("Resultados já medidos (para os slides 10 e 11)", h1))
 H(P("Média e desvio padrão de 20 execuções, em milissegundos. Medido em um Intel Xeon 2,8 GHz; "
     "rodem de novo na máquina de vocês (PAINEL_ADM.bat, opção [2]). Os números mudam, o padrão se mantém.", pequeno))
 H(Spacer(1, 6))
-linhas = [["n", "Mergesort (ms)", "Quicksort (ms)", "Quicksort vs. Mergesort"]]
+linhas = [["n", "Mergesort bottom-up (ms)", "Quicksort (ms)", "Quicksort vs. Mergesort"]]
 for n in NS:
     m, dm = res[("mergesort", n)]; q, dq = res[("quicksort", n)]
     dif = (m - q) / m * 100
@@ -180,7 +181,7 @@ H(tabela(linhas, [2.6 * cm, 4.4 * cm, 4.4 * cm, 5.1 * cm]))
 H(Spacer(1, 10))
 H(Image(os.path.join(RES, "grafico.png"), width=16.5 * cm, height=16.5 * cm * 4.2 / 7))
 H(Spacer(1, 6))
-H(P("Leitura rápida: de 30.000 para 300.000 (10× mais dados) o tempo cresceu ~12×, como previsto por "
+H(P("Leitura rápida: de 30.000 para 300.000 (10× mais dados) o tempo cresceu ~13×, perto do previsto por "
     "n log n (10 × log 300.000 / log 30.000 ≈ 12,2). Um algoritmo O(n²) cresceria 100×.", pequeno))
 
 H(Spacer(1, 12))
