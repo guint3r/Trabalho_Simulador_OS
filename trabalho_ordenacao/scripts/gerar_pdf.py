@@ -66,7 +66,7 @@ H(Spacer(1, 10))
 H(P("<b>O trabalho:</b> implementar Mergesort e Quicksort em C++, medir o tempo de cada um com vetores de "
     "<b>30, 300, 3.000, 30.000 e 300.000</b> inteiros aleatórios, <b>20 execuções por tamanho</b> "
     "(5 × 20 × 2 = <b>200 ordenações</b>) e apresentar a comparação em 15 minutos. "
-    "Já está tudo pronto na pasta <font name='DVM'>trabalho_ordenacao/</font>: o programa (<font name='DVM'>Benchmark.exe</font>), o painel <font name='DVM'>PAINEL_ADM.bat</font> e os slides (<font name='DVM'>apresentacao/slides.pptx</font>, com o roteiro de cada um nas anotações). "
+    "Já está tudo pronto na pasta <font name='DVM'>trabalho_ordenacao/</font>: o código C++, o painel <font name='DVM'>PAINEL_ADM.bat</font> (compila e roda tudo; precisa do Dev-C++ ou MinGW) e os slides (<font name='DVM'>apresentacao/slides.pptx</font>, com o roteiro de cada um nas anotações). "
     "O que falta é estudar a sua parte, colocar os nomes e ensaiar."))
 H(Spacer(1, 6))
 H(P("Como preencher: escrevam o nome de cada integrante na coluna “Responsável”. "
@@ -139,7 +139,7 @@ pessoas = [
         "<b>Slide 9 / demo:</b> abrir o <font name='DVM'>PAINEL_ADM.bat</font>, escolher a opção [2] (roda em ~2 s) "
         "e mostrar o relatório que abre no navegador.",
     ], [
-        "Testar o <font name='DVM'>PAINEL_ADM.bat</font> no computador da apresentação e levar um print de reserva.",
+        "Testar o <font name='DVM'>PAINEL_ADM.bat</font> no computador da apresentação (precisa de Dev-C++ ou MinGW) e levar um print de reserva.",
         "Rodar a versão final do teste (opções [2] e [3]) e passar a pasta resultados para a Pessoa 5.",
         "Preparar resposta para: “por que usar a mesma entrada nos dois algoritmos?”.",
     ]),

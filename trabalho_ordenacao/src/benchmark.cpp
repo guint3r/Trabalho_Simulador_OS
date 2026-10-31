@@ -2,13 +2,15 @@
 //  Benchmark de Ordenação — Mergesort × Quicksort
 //  Painel administrativo + modo linha de comando
 //
-//  Uso:
-//    Benchmark.exe                       abre o painel (menu interativo)
-//    Benchmark.exe --rodar [opções]      executa direto, sem menu (para scripts)
-//    Benchmark.exe --ajuda               mostra todas as opções
+//  No Windows, o PAINEL_ADM.bat compila e roda este arquivo sozinho.
 //
-//  Compilar (Windows/MinGW, Dev-C++ ou Linux):
-//    g++ -O2 -std=c++11 src/benchmark.cpp -o Benchmark.exe -static
+//  Uso do programa compilado:
+//    benchmark                       abre o painel (menu interativo)
+//    benchmark --rodar [opções]      executa direto, sem menu (para scripts)
+//    benchmark --ajuda               mostra todas as opções
+//
+//  Compilar à mão (MinGW, Dev-C++ ou Linux):
+//    g++ -O2 -std=c++11 -static src/benchmark.cpp -o build/benchmark.exe
 //
 //  Saídas (pasta "resultados" por padrão):
 //    resultados_brutos.csv   todas as medições individuais
@@ -611,8 +613,8 @@ static void menu(Config cfg) {
 static void ajuda() {
     cout << "Benchmark de Ordenação — Mergesort × Quicksort v" << VERSAO << "\n\n"
          << "Uso:\n"
-         << "  Benchmark.exe                    abre o painel administrativo\n"
-         << "  Benchmark.exe --rodar [opções]   executa sem menu\n\n"
+         << "  benchmark                    abre o painel administrativo\n"
+         << "  benchmark --rodar [opções]   executa sem menu\n\n"
          << "Opções:\n"
          << "  --tamanhos LISTA    ex.: 30,300,3000          (padrão: 30,300,3000,30000,300000)\n"
          << "  --execucoes N       execuções por tamanho     (padrão: 20)\n"

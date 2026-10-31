@@ -469,13 +469,13 @@ async function main() {
     "   [4] Abrir relatorio (navegador)",
     "   [5] Abrir slides da apresentacao",
     " MANUTENCAO",
-    "   [7] Recompilar   [8] Pasta   [9] Apagar",
+    "   [7] Compilar de novo   [8] Pasta   [9] Apagar",
     "",
     " Opcao: 2",
   ];
   s.addText(term.join("\n"), { x: 0.85, y: 1.75, w: 6.8, h: 4.35, fontFace: "Courier New", fontSize: 13, color: "D7DEE7", valign: "top", margin: 0, isTextBox: true, objectName: "texto terminal" });
   const demo = [
-    ["1", "Duplo clique em PAINEL_ADM.bat"],
+    ["1", "Duplo clique em PAINEL_ADM.bat: na 1ª vez ele compila o código C++"],
     ["2", "Opção [2]: roda as 200 ordenações (cerca de 2 s)"],
     ["3", "O relatório com tabela e gráfico abre no navegador"],
   ];
@@ -485,15 +485,15 @@ async function main() {
     s.addText(t, { x: 9.05, y: y - 0.1, w: 3.68, h: 0.8, fontSize: 16, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "passo demo " + n });
   });
   s.addText([
-    { text: "Linha de comando, sem menu:", options: { fontSize: 13, color: C.accent3, breakLine: true } },
-    { text: "Benchmark.exe --rodar --cenario inverso", options: { fontSize: 13, color: C.text1, fontFace: "Courier New", breakLine: true } },
+    { text: "Linha de comando, sem menu (pasta build):", options: { fontSize: 13, color: C.accent3, breakLine: true } },
+    { text: "benchmark --rodar --cenario inverso", options: { fontSize: 13, color: C.text1, fontFace: "Courier New", breakLine: true } },
     { text: " ", options: { fontSize: 6, breakLine: true } },
-    { text: "Plano B: um print desta tela, se o PC da sala bloquear o .exe.", options: { fontSize: 13, color: C.accent3 } },
+    { text: "Precisa do Dev-C++ ou MinGW instalado. Plano B: um print desta tela.", options: { fontSize: 13, color: C.accent3 } },
   ], { x: 8.25, y: 4.75, w: 4.48, h: 1.55, valign: "top", margin: 0, isTextBox: true, objectName: "linha de comando" });
   s.addNotes(
-    "PESSOA 4. [Abrir PAINEL_ADM.bat] Este é o painel que fizemos. A opção 2 roda o teste completo, as 200 ordenações, em uns 2 segundos, " +
+    "PESSOA 4. [Abrir PAINEL_ADM.bat] Este é o painel que fizemos. Ele não traz nenhum executável pronto: na primeira vez, procura o compilador C++ instalado e compila o código. A opção 2 roda o teste completo, as 200 ordenações, em uns 2 segundos, " +
       "e abre o relatório no navegador. A opção 1 abre o painel do próprio programa, onde dá para mudar tamanhos, número de execuções, semente e o tipo de entrada. " +
-      "Se o computador da sala bloquear o .exe, mostrar o print. Agora a Pessoa 5 com os resultados."
+      "Se o computador da sala não tiver compilador, mostrar o print. Agora a Pessoa 5 com os resultados."
   );
 
   // ===== 10. Tabela

@@ -11,20 +11,24 @@ divisão da apresentação de 15 minutos entre 5 pessoas.
 
 1. Extraia o ZIP inteiro numa pasta (não rode de dentro do ZIP).
 2. Dê dois cliques em **`PAINEL_ADM.bat`**.
-3. Escolha **[2]**: roda as 200 ordenações (~2 s) e abre o relatório no navegador.
+3. Escolha **[2]**: na primeira vez ele compila o código (alguns segundos), depois roda as
+   200 ordenações (~2 s) e abre o relatório no navegador.
 
-Não precisa instalar nada: o `Benchmark.exe` já vem compilado (64 bits, estático).
-Se o Windows mostrar "O Windows protegeu o computador", clique em *Mais informações → Executar assim mesmo*
-(o aviso aparece para qualquer .exe baixado que não tem assinatura digital).
+O projeto **não traz nenhum `.exe` pronto**. O painel procura um compilador C++ (`g++`) já instalado
+e compila `src/benchmark.cpp` em `build/benchmark.exe`. Ele procura no PATH e nas pastas padrão do
+Dev-C++ (Embarcadero e Orwell), TDM-GCC, Code::Blocks, MSYS2 e MinGW. Se não achar, explica o que
+instalar. O mais fácil é o **Dev-C++**, que já vem com o compilador.
+
+Slides, PDF e os resultados já incluídos abrem sem compilador (opções 4, 5 e 6).
 
 ## O que tem aqui
 
 ```
 trabalho_ordenacao/
-├── PAINEL_ADM.bat             painel de controle (Windows) — comece por aqui
-├── Benchmark.exe              programa pronto para Windows
+├── PAINEL_ADM.bat             painel de controle (Windows): compila e roda tudo
 ├── rodar.sh                   o mesmo para Linux/macOS (compila e abre o painel)
 ├── src/benchmark.cpp          código: algoritmos, medição, menu e relatório
+├── build/                     criada na 1ª execução: programa compilado e erros de compilação
 ├── resultados/                CSVs, relatório HTML, gráfico e histórico
 │   └── cenario_*/             resultados de cada cenário de entrada
 ├── apresentacao/
@@ -41,17 +45,19 @@ trabalho_ordenacao/
 | 2 | Roda o teste padrão do trabalho e abre o relatório |
 | 3 | Roda os 4 cenários: aleatório, já ordenado, invertido e muitos repetidos |
 | 4 / 5 / 6 | Abre o relatório, os slides ou o PDF da divisão |
-| 7 | Recompila o `Benchmark.exe` (precisa de g++/MinGW no PATH) |
+| 7 | Compila de novo (use depois de mudar o código) |
 | 8 / 9 | Abre ou apaga a pasta de resultados (pede confirmação para apagar) |
 
 ## Linha de comando
 
+Depois que o painel compilou o programa uma vez:
+
 ```
-Benchmark.exe                                  painel interativo
-Benchmark.exe --rodar                          teste padrão, sem menu
-Benchmark.exe --rodar --tamanhos 1000,10000 --execucoes 50 --semente 7
-Benchmark.exe --rodar --cenario inverso --saida resultados\inverso --abrir
-Benchmark.exe --ajuda
+build\benchmark.exe                                  painel interativo
+build\benchmark.exe --rodar                          teste padrão, sem menu
+build\benchmark.exe --rodar --tamanhos 1000,10000 --execucoes 50 --semente 7
+build\benchmark.exe --rodar --cenario inverso --saida resultados\inverso --abrir
+build\benchmark.exe --ajuda
 ```
 
 Códigos de saída: `0` ok, `1` argumento inválido, `2` erro ao gravar arquivos (CSV aberto no Excel?),
@@ -80,7 +86,7 @@ Cada execução grava em `resultados/`:
 
 ```bash
 # Windows (MinGW) ou Linux
-g++ -O2 -std=c++11 -static src/benchmark.cpp -o Benchmark.exe
+g++ -O2 -std=c++11 -static src/benchmark.cpp -o build/benchmark.exe
 
 # Gráfico, PDF e slides (depois de rodar o benchmark e os 4 cenários)
 python scripts/grafico.py          # pip install matplotlib
