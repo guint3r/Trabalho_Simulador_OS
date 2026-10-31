@@ -1,4 +1,5 @@
 // Gera apresentacao/slides.pptx a partir dos CSVs em resultados/.
+// Pensado para projetor em parede branca: fundo branco, texto quase preto, fonte mínima de 20 pt.
 // Requer: npm install pptxgenjs react-icons react react-dom sharp
 // Uso (na pasta do projeto): node scripts/gerar_slides.js
 const fs = require("fs");
@@ -26,12 +27,13 @@ function lerResumo(arq) {
 const RESUMO = lerResumo(path.join(RES, "resultados_resumo.csv"));
 const NS = [30, 300, 3000, 30000, 300000];
 const CENARIOS = ["aleatorio", "ordenado", "inverso", "repetidos"];
-const ROT_CEN = { aleatorio: "Aleatório", ordenado: "Já ordenado", inverso: "Invertido", repetidos: "Muitos repetidos" };
+const ROT_CEN = { aleatorio: "Aleatória", ordenado: "Já ordenada", inverso: "Invertida", repetidos: "Muitos repetidos" };
 const CEN = {};
 for (const c of CENARIOS) {
   const arq = path.join(RES, `cenario_${c}`, "resultados_resumo.csv");
   if (fs.existsSync(arq)) CEN[c] = lerResumo(arq);
 }
+const TEM_CENARIOS = Object.keys(CEN).length === 4;
 
 const milhar = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 const num = (v, casas) => v.toFixed(casas).replace(".", ",");
@@ -43,23 +45,24 @@ const comp = (n) => {
   const g = ganho(n);
   return Math.abs(g) < 3 ? "empate" : `${num(Math.abs(g), 0)}% mais ${g > 0 ? "rápido" : "lento"}`;
 };
+const GANHO = num(ganho(300000), 0);
 const razaoM = m(300000) / m(30000);
 const prevNlogN = (10 * Math.log(300000)) / Math.log(30000);
+const cen = (c, alg) => CEN[c][`${alg}:300000`].media;
 
-// ---------------------------------------------------------------- tema
+// ---------------------------------------------------------------- tema (alto contraste)
 const THEME = {
   name: "Ordenacao",
   headFontFace: "Arial",
   bodyFontFace: "Calibri",
   colors: {
-    dk1: "1B1F24", lt1: "FFFFFF", dk2: "141A22", lt2: "F1F3F6",
-    accent1: "2A78D6", accent2: "EB6834", accent3: "5B6573", accent4: "1BAF7A",
-    accent5: "EDA100", accent6: "6250D6", hlink: "2A78D6", folHlink: "6250D6",
+    dk1: "111111", lt1: "FFFFFF", dk2: "3A3F47", lt2: "F1F3F6",
+    accent1: "1F66C2", accent2: "D9541E", accent3: "3A3F47", accent4: "13834F",
+    accent5: "B27800", accent6: "5240C2", hlink: "1F66C2", folHlink: "5240C2",
   },
 };
 const T = THEME.colors;
-const MUTED_HEX = "5B6573";
-const ESCURO_TXT = "C9D1DB";
+const BORDA = "C9CED6";
 
 const pres = new pptxgen();
 pres.layout = "LAYOUT_WIDE"; // 13,333 x 7,5 pol
@@ -67,37 +70,25 @@ pres.title = "Mergesort × Quicksort";
 pres.author = "Grupo";
 pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
 const C = pres.SchemeColor;
-const W = 13.333;
 
 // ---------------------------------------------------------------- layouts
 pres.defineSlideMaster({
   title: "CAPA",
-  background: { color: T.dk2 },
+  background: { color: T.lt1 },
   objects: [
-    { placeholder: { options: { name: "title", type: "title", x: 0.8, y: 2.55, w: 11.7, h: 1.3, fontSize: 54, bold: true, color: C.background1, fontFace: THEME.headFontFace, align: "left", valign: "middle", margin: 0 }, text: "" } },
-    { placeholder: { options: { name: "body", type: "body", x: 0.8, y: 3.95, w: 11.7, h: 0.7, fontSize: 24, color: C.background2, valign: "top", margin: 0 }, text: "" } },
-    { placeholder: { options: { name: "integrantes", type: "body", x: 0.8, y: 6.05, w: 11.7, h: 0.5, fontSize: 16, color: C.background2, valign: "top", margin: 0 }, text: "" } },
+    { placeholder: { options: { name: "title", type: "title", x: 0.8, y: 2.75, w: 11.7, h: 1.3, fontSize: 60, bold: true, color: C.text1, fontFace: THEME.headFontFace, align: "left", valign: "middle", margin: 0 }, text: "" } },
+    { placeholder: { options: { name: "body", type: "body", x: 0.8, y: 4.15, w: 11.7, h: 0.8, fontSize: 28, color: C.text2, align: "left", valign: "top", margin: 0 }, text: "" } },
+    { placeholder: { options: { name: "integrantes", type: "body", x: 0.8, y: 6.1, w: 11.7, h: 0.5, fontSize: 22, color: C.text1, align: "left", valign: "top", margin: 0 }, text: "" } },
   ],
 });
 pres.defineSlideMaster({
   title: "CONTEUDO",
   background: { color: T.lt1 },
-  margin: [0.5, 0.6, 0.7, 0.6],
   objects: [
-    { placeholder: { options: { name: "title", type: "title", x: 0.6, y: 0.35, w: 10.2, h: 0.9, fontSize: 34, bold: true, color: C.text1, fontFace: THEME.headFontFace, align: "left", valign: "middle", margin: 0 }, text: "" } },
-    { placeholder: { options: { name: "orador", type: "body", x: 10.9, y: 0.55, w: 1.85, h: 0.5, fontSize: 12, color: C.accent3, align: "right", valign: "middle", margin: 0 }, text: "" } },
-    { text: { text: "Mergesort × Quicksort", options: { x: 0.6, y: 6.95, w: 6, h: 0.3, fontSize: 10, color: MUTED_HEX, margin: 0 } } },
+    { placeholder: { options: { name: "title", type: "title", x: 0.6, y: 0.35, w: 12.13, h: 1.0, fontSize: 40, bold: true, color: C.text1, fontFace: THEME.headFontFace, align: "left", valign: "middle", margin: 0 }, text: "" } },
+    { placeholder: { options: { name: "orador", type: "body", x: 0.6, y: 6.95, w: 4, h: 0.35, fontSize: 14, bold: true, color: C.text2, align: "left", valign: "middle", margin: 0 }, text: "" } },
   ],
-  slideNumber: { x: 12.23, y: 6.95, w: 0.5, h: 0.3, fontSize: 10, color: MUTED_HEX, align: "right" },
-});
-pres.defineSlideMaster({
-  title: "ESCURO",
-  background: { color: T.dk2 },
-  objects: [
-    { placeholder: { options: { name: "title", type: "title", x: 0.6, y: 0.35, w: 10.2, h: 0.9, fontSize: 34, bold: true, color: C.background1, fontFace: THEME.headFontFace, align: "left", valign: "middle", margin: 0 }, text: "" } },
-    { placeholder: { options: { name: "orador", type: "body", x: 10.9, y: 0.55, w: 1.85, h: 0.5, fontSize: 12, color: C.background2, align: "right", valign: "middle", margin: 0 }, text: "" } },
-  ],
-  slideNumber: { x: 12.23, y: 6.95, w: 0.5, h: 0.3, fontSize: 10, color: ESCURO_TXT, align: "right" },
+  slideNumber: { x: 12.13, y: 6.95, w: 0.6, h: 0.35, fontSize: 14, color: T.dk2, align: "right" },
 });
 
 // ---------------------------------------------------------------- utilidades
@@ -107,15 +98,29 @@ async function icone(Comp, corHex, px = 256) {
   return "image/png;base64," + buf.toString("base64");
 }
 
-// Círculo colorido com ícone branco (motivo visual do deck)
 async function iconeCirculo(slide, Comp, x, y, d, cor, nome) {
   slide.addShape(pres.shapes.OVAL, { x, y, w: d, h: d, fill: { color: cor }, line: { color: cor }, objectName: nome + " círculo" });
   const p = d * 0.27;
   slide.addImage({ data: await icone(Comp, "FFFFFF"), x: x + p, y: y + p, w: d - 2 * p, h: d - 2 * p, altText: nome, objectName: nome + " ícone" });
 }
 
-// Desenha um "vetor": grupos de células com números (motivo dos algoritmos)
-const CW = 0.6, CH = 0.5, CG = 0.06, GG = 0.32;
+function cartao(slide, x, y, w, h, nome, opts = {}) {
+  slide.addShape(pres.shapes.ROUNDED_RECTANGLE, {
+    x, y, w, h, rectRadius: 0.12,
+    fill: { color: opts.fill || T.lt2 }, line: { color: opts.line || BORDA, width: opts.lineW || 1 }, objectName: nome,
+  });
+}
+
+// Quadro "No dia a dia": o motivo que se repete em todo slide
+async function diaADia(slide, x, y, w, h, texto) {
+  cartao(slide, x, y, w, h, "dia a dia", { fill: "FFF6EF", line: "F0B999", lineW: 1.25 });
+  await iconeCirculo(slide, fa.FaLightbulb, x + 0.25, y + 0.25, 0.6, T.accent2, "dia a dia");
+  slide.addText("No dia a dia", { x: x + 1.0, y: y + 0.25, w: w - 1.2, h: 0.6, fontSize: 20, bold: true, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "dia a dia título" });
+  slide.addText(texto, { x: x + 0.25, y: y + 1.0, w: w - 0.5, h: h - 1.15, fontSize: 20, color: C.text1, valign: "top", margin: 0, isTextBox: true, objectName: "dia a dia texto" });
+}
+
+// "Vetor": células com números (motivo dos algoritmos)
+const CW = 0.62, CH = 0.52, CG = 0.06, GG = 0.3;
 function larguraGrupos(grupos) {
   const cel = grupos.reduce((s, g) => s + g.length, 0);
   return cel * CW + (cel - grupos.length) * CG + (grupos.length - 1) * GG;
@@ -127,35 +132,418 @@ function desenharVetor(slide, grupos, xCentro, y, estilo, nome) {
       const e = typeof estilo === "function" ? estilo(v, gi, i) : estilo;
       slide.addText(String(v), {
         shape: pres.shapes.ROUNDED_RECTANGLE, rectRadius: 0.08,
-        x, y, w: CW, h: CH, fill: { color: e.fill }, line: e.line ? { color: e.line, width: 2.25 } : { color: e.fill },
-        color: e.text, fontSize: 16, bold: true, align: "center", valign: "middle", margin: 0,
-        objectName: `${nome} ${v}`,
+        x, y, w: CW, h: CH, fill: { color: e.fill }, line: { color: e.line || e.fill, width: e.line ? 2.5 : 1 },
+        color: e.text, fontSize: 20, bold: true, align: "center", valign: "middle", margin: 0, objectName: `${nome} ${v}`,
       });
       x += CW + (i < g.length - 1 ? CG : 0);
     });
     x += GG;
   });
 }
-function rotuloLinha(slide, texto, y, sub) {
-  slide.addText([
-    { text: texto, options: { bold: true, color: C.text1, fontSize: 14, breakLine: !!sub } },
-    ...(sub ? [{ text: sub, options: { color: C.accent3, fontSize: 11 } }] : []),
-  ], { x: 0.6, y: y - 0.1, w: 2.0, h: CH + 0.2, valign: "middle", margin: 0, isTextBox: true, objectName: "rótulo " + texto });
+function rotuloLinha(slide, texto, y) {
+  slide.addText(texto, { x: 0.6, y: y - 0.05, w: 2.0, h: CH + 0.1, fontSize: 20, bold: true, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "rótulo " + texto });
 }
 
-function cartao(slide, x, y, w, h, cor, nome) {
-  slide.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w, h, rectRadius: 0.12, fill: { color: cor }, line: { color: cor }, objectName: nome });
-}
-
-function lista(slide, itens, x, y, w, h, extra = {}) {
-  slide.addText(
-    itens.map((t, i) => ({ text: t, options: { bullet: true, breakLine: i < itens.length - 1 } })),
-    { x, y, w, h, fontSize: 16, color: C.text1, paraSpaceAfter: 10, valign: "top", margin: 0, isTextBox: true, ...extra }
-  );
-}
-
-const PESSOA = (n) => `Pessoa ${n}`;
+const NEUTRO = { fill: T.lt2, text: T.dk1, line: BORDA };
+const AZUL = { fill: T.accent1, text: T.lt1 };
+const LARANJA = { fill: T.accent2, text: T.lt1 };
 const VETOR = [38, 27, 43, 3, 9, 82, 10, 15];
+const ORDENADO = [3, 9, 10, 15, 27, 38, 43, 82];
+const PESSOA = (n) => `Pessoa ${n}  ·  Mergesort × Quicksort`;
+
+function conteudo(secao, titulo, pessoa) {
+  const s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: secao });
+  s.addText(titulo, { placeholder: "title" });
+  s.addText(PESSOA(pessoa), { placeholder: "orador" });
+  return s;
+}
+
+// ---------------------------------------------------------------- slides
+async function main() {
+  // ===== 1. Capa
+  pres.addSection({ title: "Abertura" });
+  let s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Abertura" });
+  s.addText("Mergesort × Quicksort", { placeholder: "title" });
+  s.addText("Quem ordena mais rápido? Medimos 200 ordenações em C++", { placeholder: "body" });
+  s.addText("Integrante 1  ·  Integrante 2  ·  Integrante 3  ·  Integrante 4  ·  Integrante 5", { placeholder: "integrantes" });
+  desenharVetor(s, [VETOR], 0.8 + larguraGrupos([VETOR]) / 2, 0.9, NEUTRO, "capa vetor");
+  desenharVetor(s, [ORDENADO.slice(0, 4), ORDENADO.slice(4)], 0.8 + larguraGrupos([ORDENADO.slice(0, 4), ORDENADO.slice(4)]) / 2, 1.55, (v, g) => (g === 0 ? AZUL : LARANJA), "capa ordenado");
+  s.addNotes(
+    "PESSOA 1 (0:00 a 2:30). Boa tarde. Comparamos dois algoritmos de ordenação muito usados, o Mergesort e o Quicksort. " +
+      "A pergunta é simples: na prática, qual ordena mais rápido? Implementamos os dois em C++ e medimos 200 ordenações."
+  );
+
+  // ===== 2. Por que ordenar
+  s = conteudo("Abertura", "Ordenar é o primeiro passo de quase tudo", 1);
+  const usos = [
+    [fa.FaSearch, "Busca rápida", "Busca binária só funciona com os dados em ordem"],
+    [fa.FaDatabase, "Bancos de dados", "Índices e ORDER BY ordenam o tempo todo"],
+    [fa.FaListOl, "Rankings", "Notas, preços, tabela do campeonato"],
+  ];
+  for (let i = 0; i < usos.length; i++) {
+    const y = 1.6 + i * 1.75;
+    cartao(s, 0.6, y, 7.6, 1.5, "cartão " + usos[i][1]);
+    await iconeCirculo(s, usos[i][0], 0.9, y + 0.33, 0.85, T.dk1, usos[i][1]);
+    s.addText([
+      { text: usos[i][1], options: { bold: true, fontSize: 24, color: C.text1, breakLine: true } },
+      { text: usos[i][2], options: { fontSize: 20, color: C.text2 } },
+    ], { x: 2.0, y: y + 0.12, w: 6.0, h: 1.26, valign: "middle", margin: 0, isTextBox: true, objectName: "texto " + usos[i][1] });
+  }
+  await diaADia(s, 8.6, 1.6, 4.13, 4.9,
+    "Achar um nome na lista de chamada é rápido porque ela está em ordem alfabética. Fora de ordem, você teria que ler a lista inteira.");
+  s.addNotes(
+    "PESSOA 1. Ordenação aparece em todo lugar: busca binária, bancos de dados, rankings. " +
+      "Os dois algoritmos têm a mesma complexidade média, n log n, mas isso não diz qual é mais rápido na prática. Por isso medimos."
+  );
+
+  // ===== 3. Metodologia
+  s = conteudo("Abertura", "Como testamos: 200 ordenações", 1);
+  const stats = [
+    ["5", "tamanhos", "de 30 a 300.000"],
+    ["20", "repetições", "por tamanho"],
+    ["200", "ordenações", "no total"],
+    ["42", "semente fixa", "dados iguais"],
+  ];
+  stats.forEach(([n, rot, sub], i) => {
+    const x = 0.6 + i * 3.1;
+    cartao(s, x, 1.6, 2.83, 2.5, "estatística " + rot);
+    s.addText([
+      { text: n, options: { fontSize: 66, bold: true, color: C.text1, breakLine: true, fontFace: THEME.headFontFace } },
+      { text: rot, options: { fontSize: 22, bold: true, color: C.text1, breakLine: true } },
+      { text: sub, options: { fontSize: 20, color: C.text2 } },
+    ], { x: x + 0.3, y: 1.7, w: 2.3, h: 2.3, valign: "middle", margin: 0, isTextBox: true, objectName: "número " + rot });
+  });
+  s.addText([
+    { text: "Regras iguais para os dois: ", options: { bold: true } },
+    { text: "a mesma entrada, o mesmo compilador (g++ -O2) e todo resultado conferido." },
+  ], { x: 0.6, y: 4.45, w: 6.4, h: 2.05, fontSize: 22, color: C.text1, valign: "top", margin: 0, isTextBox: true, objectName: "regras" });
+  await diaADia(s, 7.3, 4.4, 5.43, 2.2, "Semente fixa é dar a mesma prova para todos os alunos: só assim a comparação é justa.");
+  s.addNotes(
+    "PESSOA 1. 5 tamanhos, de 30 a 300 mil, 20 repetições cada, para os dois algoritmos: 200 ordenações. " +
+      "Os números são aleatórios, mas com semente fixa 42: quem rodar o programa recebe exatamente os mesmos dados. " +
+      "Os dois ordenam cópias da mesma entrada e conferimos se saiu ordenado. Agora a Pessoa 2 com o Mergesort."
+  );
+
+  // ===== 4. Mergesort: como funciona
+  pres.addSection({ title: "Mergesort" });
+  s = conteudo("Mergesort", "Mergesort: divide, depois junta", 2);
+  {
+    const xc = 2.65 + 6.3 / 2;
+    const linhas = [
+      ["vetor", [VETOR], NEUTRO],
+      ["dividir", [[38, 27, 43, 3], [9, 82, 10, 15]], NEUTRO],
+      ["dividir", [[38, 27], [43, 3], [9, 82], [10, 15]], NEUTRO],
+      ["juntar", [[27, 38], [3, 43], [9, 82], [10, 15]], AZUL],
+      ["juntar", [[3, 27, 38, 43], [9, 10, 15, 82]], AZUL],
+      ["pronto", [ORDENADO], AZUL],
+    ];
+    linhas.forEach(([rot, grupos, est], i) => {
+      const y = 1.6 + i * 0.84;
+      rotuloLinha(s, rot, y);
+      desenharVetor(s, grupos, xc, y, est, `merge linha ${i + 1}`);
+    });
+  }
+  await diaADia(s, 9.25, 1.6, 3.48, 4.95,
+    "Arrumar um baralho: divida em montinhos de 1 carta e vá juntando dois montes já arrumados, olhando só a carta de cima de cada um.");
+  s.addNotes(
+    "PESSOA 2 (2:30 a 5:00). O Mergesort corta o vetor ao meio até sobrar um elemento em cada pedaço, que já está ordenado. " +
+      "Depois junta os pedaços dois a dois: compara o primeiro de cada um e pega o menor. Cinza é dividir, azul é juntar. " +
+      "No código: funções mergesortRec e intercalar."
+  );
+
+  // ===== 5. Mergesort: custo
+  s = conteudo("Mergesort", "Mergesort: previsível e estável", 2);
+  const custosM = [
+    [fa.FaClock, "Sempre n log n", "300.000 itens: só 19 níveis de divisão, em qualquer caso."],
+    [fa.FaMemory, "Gasta memória", "Vetor extra do mesmo tamanho: ~1,2 MB para 300.000 números."],
+    [fa.FaBalanceScale, "Estável", "Itens iguais mantêm a ordem em que chegaram."],
+  ];
+  for (let i = 0; i < custosM.length; i++) {
+    const x = 0.6 + i * 3.0;
+    cartao(s, x, 1.6, 2.8, 3.95, "cartão " + custosM[i][1]);
+    await iconeCirculo(s, custosM[i][0], x + 0.25, 1.85, 0.75, T.accent1, custosM[i][1]);
+    s.addText([
+      { text: custosM[i][1], options: { bold: true, fontSize: 24, color: C.text1, breakLine: true } },
+      { text: custosM[i][2], options: { fontSize: 20, color: C.text1 } },
+    ], { x: x + 0.25, y: 2.75, w: 2.35, h: 2.7, valign: "top", margin: 0, isTextBox: true, objectName: "texto " + custosM[i][1] });
+  }
+  await diaADia(s, 9.65, 1.6, 3.08, 4.95,
+    "Memória extra: precisa de uma mesa a mais para juntar as cartas.\n\nEstável: como a fila do banco, quem chegou antes continua na frente.");
+  s.addText("Resumo: nunca surpreende, mas ocupa espaço.", {
+    x: 0.6, y: 5.75, w: 8.8, h: 0.8, fontSize: 24, bold: true, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "resumo merge",
+  });
+  s.addNotes(
+    "PESSOA 2. Como o vetor é cortado ao meio, são log de n níveis: para 300 mil, 19. Em cada nível passa por todos os elementos: n log n, sempre. " +
+      "O preço é memória: um vetor auxiliar do mesmo tamanho. E é estável: itens iguais não trocam de ordem. Agora a Pessoa 3 com o Quicksort."
+  );
+
+  // ===== 6. Quicksort: como funciona
+  pres.addSection({ title: "Quicksort" });
+  s = conteudo("Quicksort", "Quicksort: escolhe um corte e separa", 3);
+  {
+    const xc = 2.65 + 6.3 / 2;
+    const linhas = [
+      ["pivô = 15", [VETOR], (v, g, i) => (v === 15 ? LARANJA : i === 0 || i === 3 ? { fill: T.lt1, text: T.dk1, line: T.accent2 } : NEUTRO)],
+      ["separar", [[15, 10, 9, 3], [43, 82, 27, 38]], NEUTRO],
+      ["repetir", [[3, 9, 10, 15], [27, 38, 43, 82]], LARANJA],
+      ["pronto", [ORDENADO], LARANJA],
+    ];
+    linhas.forEach(([rot, grupos, est], i) => {
+      const y = 1.7 + i * 1.05;
+      rotuloLinha(s, rot, y);
+      desenharVetor(s, grupos, xc, y, est, `quick linha ${i + 1}`);
+    });
+  }
+  s.addText("Pivô = o do meio entre o 1º, o central e o último (38, 3 e 15).", {
+    x: 0.6, y: 5.95, w: 8.4, h: 0.6, fontSize: 20, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "nota pivô",
+  });
+  await diaADia(s, 9.25, 1.6, 3.48, 4.95,
+    "Separar provas por uma nota de corte: menores numa pilha, maiores na outra. Depois repete em cada pilha. Tudo na mesma mesa.");
+  s.addNotes(
+    "PESSOA 3 (5:00 a 7:30). O Quicksort escolhe um pivô, a nota de corte. Usamos a mediana de três: entre 38, 3 e 15, o do meio é 15. " +
+      "Menores vão para a esquerda, maiores para a direita, trocando dentro do próprio vetor. Depois repete em cada lado. Não precisa de vetor extra."
+  );
+
+  // ===== 7. Quicksort: risco
+  s = conteudo("Quicksort", "Quicksort: o perigo é o pivô ruim", 3);
+  const custosQ = [
+    ["Na média", "n log n"],
+    ["No pior caso", "n²"],
+    ["Memória extra", "pouca"],
+    ["Estável?", "Não"],
+  ];
+  custosQ.forEach(([rot, val], i) => {
+    const x = 0.6 + (i % 2) * 3.15, y = 1.6 + Math.floor(i / 2) * 2.05;
+    cartao(s, x, y, 2.95, 1.8, "custo " + rot);
+    s.addText([
+      { text: rot, options: { fontSize: 20, color: C.text2, breakLine: true } },
+      { text: val, options: { fontSize: 36, bold: true, color: C.text1, fontFace: THEME.headFontFace } },
+    ], { x: x + 0.25, y: y + 0.15, w: 2.5, h: 1.5, valign: "middle", margin: 0, isTextBox: true, objectName: "valor " + rot });
+  });
+  const ordQ = TEM_CENARIOS ? cen("ordenado", "quicksort") : null;
+  cartao(s, 7.1, 1.6, 5.63, 3.85, "cartão pior caso", { fill: T.lt1, line: T.accent2, lineW: 2.5 });
+  s.addText([
+    { text: "Pivô ruim", options: { fontSize: 24, bold: true, color: C.text1, breakLine: true } },
+    { text: "Se o corte é sempre a menor nota, uma pilha fica com quase tudo.", options: { fontSize: 20, color: C.text1, breakLine: true } },
+    { text: " ", options: { fontSize: 10, breakLine: true } },
+    { text: "Com 300.000 itens: ~45 bilhões de comparações (minutos).", options: { fontSize: 20, color: C.text1, breakLine: true } },
+    { text: " ", options: { fontSize: 10, breakLine: true } },
+    { text: ordQ ? `Nossa defesa, a mediana de três: vetor já ordenado em ${ms(ordQ)} ms.` : "Nossa defesa: mediana de três.", options: { fontSize: 20, bold: true, color: C.accent2 } },
+  ], { x: 7.4, y: 1.8, w: 5.05, h: 3.5, valign: "top", margin: 0, isTextBox: true, objectName: "texto pior caso" });
+  s.addText("Resumo: o mais rápido na média, se o corte for bem escolhido.", {
+    x: 0.6, y: 5.75, w: 12.13, h: 0.7, fontSize: 24, bold: true, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "resumo quick",
+  });
+  s.addNotes(
+    "PESSOA 3. Na média é n log n. Mas se o pivô for sempre o menor ou o maior, cada separação tira um elemento só e vira n ao quadrado: " +
+      "com 300 mil, uns 45 bilhões de comparações. A mediana de três evita isso: vetor já ordenado de 300 mil em poucos milissegundos. " +
+      "Não é estável e quase não usa memória extra. Agora a Pessoa 4 mostra como medimos."
+  );
+
+  // ===== 8. Como medimos
+  pres.addSection({ title: "Implementação" });
+  s = conteudo("Implementação", "Como medimos sem enganar o relógio", 4);
+  const passos = [
+    [fa.FaRandom, "Gerar", "semente 42"],
+    [fa.FaCopy, "Copiar", "mesma entrada"],
+    [fa.FaStopwatch, "Cronometrar", "só a ordenação"],
+    [fa.FaCheckDouble, "Conferir", "saiu ordenado?"],
+    [fa.FaFileCsv, "Salvar", "CSV + relatório"],
+  ];
+  for (let i = 0; i < passos.length; i++) {
+    const x = 0.6 + i * 2.48;
+    await iconeCirculo(s, passos[i][0], x + 0.62, 1.6, 0.95, T.dk1, passos[i][1]);
+    if (i < passos.length - 1) {
+      s.addShape(pres.shapes.LINE, { x: x + 1.75, y: 2.075, w: 1.17, h: 0, line: { color: "6B7380", width: 2, endArrowType: "triangle" }, objectName: "seta " + i });
+    }
+    s.addText([
+      { text: `${i + 1}. ${passos[i][1]}`, options: { fontSize: 22, bold: true, color: C.text1, breakLine: true } },
+      { text: passos[i][2], options: { fontSize: 20, color: C.text2 } },
+    ], { x: x - 0.05, y: 2.75, w: 2.3, h: 1.0, align: "center", valign: "top", margin: 0, isTextBox: true, objectName: "passo " + passos[i][1] });
+  }
+  await diaADia(s, 0.6, 4.2, 5.93, 2.4, "Aquecimento: a primeira volta do treino não conta. Descartamos 1 rodada por tamanho.");
+  await diaADia(s, 6.8, 4.2, 5.93, 2.4, "Vetor pequeno é rápido demais para o cronômetro: cronometra 10 voltas e divide por 10.");
+  s.addNotes(
+    "PESSOA 4 (7:30 a 10:30). Para cada execução: gera o vetor, copia para os dois algoritmos, cronometra só a ordenação, confere e salva. " +
+      "Dois cuidados: descartamos uma rodada de aquecimento, e vetores pequenos, que ordenam em menos de um microssegundo, " +
+      "são ordenados várias vezes e o tempo é dividido (k cópias, k = 20.000 / n)."
+  );
+
+  // ===== 9. Demo
+  s = conteudo("Implementação", "Demonstração: um clique e pronto", 4);
+  cartao(s, 0.6, 1.6, 6.6, 4.95, "terminal", { fill: "F7F8FA", line: "6B7380", lineW: 1.5 });
+  const term = [
+    " PAINEL ADM - Mergesort x Quicksort",
+    " ----------------------------------",
+    " [1] Abrir o painel do benchmark",
+    " [2] Rodar o teste padrao",
+    " [3] Rodar os 4 cenarios",
+    " [4] Abrir relatorio",
+    " [5] Abrir slides",
+    " [7] Compilar de novo",
+    " [0] Sair",
+    "",
+    " Opcao: 2",
+  ];
+  s.addText(term.join("\n"), { x: 0.85, y: 1.8, w: 6.2, h: 4.6, fontFace: "Courier New", fontSize: 20, color: T.dk1, valign: "top", margin: 0, isTextBox: true, objectName: "texto terminal" });
+  const demo = [
+    ["1", "Duplo clique no PAINEL_ADM.bat"],
+    ["2", "Opção 2: 200 ordenações em ~2 s"],
+    ["3", "O relatório abre no navegador"],
+  ];
+  demo.forEach(([n, t], i) => {
+    const y = 1.6 + i * 1.0;
+    s.addText(n, { shape: pres.shapes.OVAL, x: 7.55, y, w: 0.65, h: 0.65, fill: { color: T.accent2 }, line: { color: T.accent2 }, color: T.lt1, fontSize: 22, bold: true, align: "center", valign: "middle", margin: 0, objectName: "número demo " + n });
+    s.addText(t, { x: 8.4, y: y - 0.1, w: 4.33, h: 0.85, fontSize: 20, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "passo demo " + n });
+  });
+  await diaADia(s, 7.55, 4.65, 5.18, 1.9, "Como uma receita: na 1ª vez o painel “prepara” (compila); depois é só servir.");
+  s.addNotes(
+    "PESSOA 4. [Abrir PAINEL_ADM.bat] Na primeira vez ele procura o compilador C++ e compila o código. A opção 2 roda as 200 ordenações em uns 2 segundos " +
+      "e abre o relatório no navegador. A opção 1 deixa mudar tamanhos, repetições, semente e o tipo de entrada. " +
+      "Plano B: se o PC da sala não tiver Dev-C++ ou MinGW, mostrar o print. Agora a Pessoa 5 com os resultados."
+  );
+
+  // ===== 10. Resultados
+  pres.addSection({ title: "Resultados" });
+  s = conteudo("Resultados", `Quicksort foi ${GANHO}% mais rápido`, 5);
+  const cab = (t, al = "right") => ({ text: t, options: { bold: true, color: C.text1, fill: { color: T.lt2 }, align: al } });
+  const linhasTab = [[cab("Itens", "left"), cab("Merge (ms)"), cab("Quick (ms)"), cab("Quick foi")]];
+  NS.forEach((n) => {
+    const dest = n === 300000;
+    const ruido = n <= 300;
+    const o = (al = "right") => ({ align: al, bold: dest, color: ruido ? C.text2 : C.text1 });
+    linhasTab.push([
+      { text: milhar(n), options: o("left") },
+      { text: ms(m(n)), options: o() },
+      { text: ms(q(n)), options: o() },
+      { text: ruido ? "varia muito" : comp(n), options: o() },
+    ]);
+  });
+  s.addTable(linhasTab, {
+    x: 0.6, y: 1.6, w: 7.7, colW: [1.7, 1.9, 1.9, 2.2], rowH: 0.66, fontSize: 20, fontFace: THEME.bodyFontFace,
+    valign: "middle", border: { type: "solid", pt: 1, color: BORDA }, margin: [0, 0.15, 0, 0.15], objectName: "tabela resultados",
+  });
+  cartao(s, 8.7, 1.6, 4.03, 2.35, "destaque ganho", { fill: T.accent2, line: T.accent2 });
+  s.addText([
+    { text: `${GANHO}%`, options: { fontSize: 72, bold: true, color: T.lt1, breakLine: true, fontFace: THEME.headFontFace } },
+    { text: `${ms(q(300000))} ms contra ${ms(m(300000))} ms`, options: { fontSize: 20, bold: true, color: T.lt1 } },
+  ], { x: 8.95, y: 1.7, w: 3.55, h: 2.15, valign: "middle", margin: 0, isTextBox: true, objectName: "texto ganho" });
+  await diaADia(s, 8.7, 4.2, 4.03, 2.4, "Os dois ordenam 300.000 números em 1/3 de uma piscada de olho.");
+  s.addText("30 e 300 itens levam microssegundos: ali a % muda a cada rodada.", {
+    x: 0.6, y: 5.75, w: 7.7, h: 0.8, fontSize: 20, color: C.text2, valign: "top", margin: 0, isTextBox: true, objectName: "nota tabela",
+  });
+  s.addNotes(
+    `PESSOA 5 (10:30 a 13:30). Nos tamanhos que importam o Quicksort ganhou sempre: ${GANHO}% com 300 mil itens, ` +
+      `${ms(q(300000))} ms contra ${ms(m(300000))} ms. Para ter ideia, uma piscada de olho leva uns 100 ms. ` +
+      "Com 30 e 300 itens tudo leva microssegundos e a porcentagem muda a cada rodada, então não tiramos conclusão dali."
+  );
+
+  // ===== 11. Crescimento
+  s = conteudo("Resultados", `10× mais dados, ~${num(razaoM, 0)}× mais tempo`, 5);
+  s.addChart(pres.charts.LINE, [
+    { name: "Mergesort", labels: NS.map(milhar), values: NS.map(m) },
+    { name: "Quicksort", labels: NS.map(milhar), values: NS.map(q) },
+  ], {
+    x: 0.6, y: 1.5, w: 7.6, h: 5.15, chartColors: [T.accent1, T.accent2], lineSize: 4, lineDataSymbol: "circle", lineDataSymbolSize: 11,
+    valAxisLogScaleBase: 10, valAxisMinVal: 0.0001, valAxisMaxVal: 100, valAxisLabelFormatCode: "General",
+    showTitle: true, title: "Tempo médio (ms), escala log", titleFontSize: 18, titleColor: T.dk1, titleFontFace: "+mn-lt",
+    showLegend: true, legendPos: "t", legendFontSize: 18, legendFontFace: "+mn-lt", legendColor: T.dk1,
+    catAxisLabelColor: T.dk1, valAxisLabelColor: T.dk1, catAxisLabelFontSize: 18, valAxisLabelFontSize: 16,
+    catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt",
+    valGridLine: { color: "D5DAE1", size: 1 }, catGridLine: { style: "none" },
+    objectName: "gráfico crescimento",
+  });
+  const callouts = [
+    [`${num(razaoM, 1)}×`, "o que medimos", C.accent1],
+    [`${num(prevNlogN, 1)}×`, "o que n log n prevê", C.text1],
+    ["100×", "seria um algoritmo n²", C.accent2],
+  ];
+  callouts.forEach(([v, t, cor], i) => {
+    const y = 1.5 + i * 0.95;
+    s.addText(v, { x: 8.6, y, w: 1.95, h: 0.9, fontSize: 40, bold: true, color: cor, valign: "middle", margin: 0, isTextBox: true, fontFace: THEME.headFontFace, objectName: "valor " + i });
+    s.addText(t, { x: 10.6, y, w: 2.13, h: 0.9, fontSize: 20, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "rótulo " + i });
+  });
+  await diaADia(s, 8.6, 4.4, 4.13, 2.25, "n²: festa com 300 mil pessoas, todos se cumprimentam: 45 bilhões de apertos de mão.");
+  s.addNotes(
+    `PESSOA 5. Na escala log as duas linhas são quase paralelas: crescem do mesmo jeito. De 30 mil para 300 mil, 10 vezes mais dados, ` +
+      `o tempo cresceu ${num(razaoM, 1)} vezes. A teoria n log n prevê ${num(prevNlogN, 1)}. Um algoritmo quadrático cresceria 100 vezes: ` +
+      "é como numa festa todo mundo cumprimentar todo mundo."
+  );
+
+  // ===== 12. Cenários
+  if (TEM_CENARIOS) {
+    s = conteudo("Resultados", "Quicksort venceu nas 4 entradas", 5);
+    const labels = CENARIOS.map((c) => ROT_CEN[c]);
+    s.addChart(pres.charts.BAR, [
+      { name: "Mergesort", labels, values: CENARIOS.map((c) => cen(c, "mergesort")) },
+      { name: "Quicksort", labels, values: CENARIOS.map((c) => cen(c, "quicksort")) },
+    ], {
+      x: 0.6, y: 1.5, w: 7.6, h: 5.15, barDir: "col", barGrouping: "clustered", barGapWidthPct: 55, chartColors: [T.accent1, T.accent2],
+      showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", dataLabelFontSize: 18, dataLabelColor: T.dk1, dataLabelFontFace: "+mn-lt", dataLabelFontBold: true,
+      showTitle: true, title: "Tempo médio (ms) com 300.000 itens", titleFontSize: 18, titleColor: T.dk1, titleFontFace: "+mn-lt",
+      showLegend: true, legendPos: "t", legendFontSize: 18, legendFontFace: "+mn-lt", legendColor: T.dk1,
+      catAxisLabelColor: T.dk1, valAxisLabelColor: T.dk1, catAxisLabelFontSize: 16, valAxisLabelFontSize: 16,
+      catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt",
+      valGridLine: { color: "D5DAE1", size: 1 }, catGridLine: { style: "none" },
+      objectName: "gráfico cenários",
+    });
+    const vezesRep = cen("repetidos", "mergesort") / cen("repetidos", "quicksort");
+    const vezesOrd = cen("aleatorio", "mergesort") / cen("ordenado", "mergesort");
+    cartao(s, 8.6, 1.6, 4.13, 2.25, "destaque repetidos", { fill: T.accent2, line: T.accent2 });
+    s.addText([
+      { text: `${num(vezesRep, 1)}×`, options: { fontSize: 60, bold: true, color: T.lt1, breakLine: true, fontFace: THEME.headFontFace } },
+      { text: "mais rápido com muitos valores repetidos", options: { fontSize: 20, bold: true, color: T.lt1 } },
+    ], { x: 8.85, y: 1.7, w: 3.65, h: 2.05, valign: "middle", margin: 0, isTextBox: true, objectName: "texto repetidos" });
+    await diaADia(s, 8.6, 4.1, 4.13, 2.55, `Entrada já em ordem: os dois ficam ~${num(vezesOrd, 0)}× mais rápidos, como arrumar uma estante que já está quase arrumada.`);
+    s.addNotes(
+      "PESSOA 5. Testamos também entradas que não são aleatórias, pela opção 3 do painel. O Quicksort ganhou nas quatro. " +
+        `Com muitos valores repetidos foi ${num(vezesRep, 1)} vezes mais rápido. Com a entrada já ordenada ou invertida os dois ficam bem mais rápidos, ` +
+        "e o Quicksort não caiu no pior caso graças à mediana de três."
+    );
+  }
+
+  // ===== 13. Conclusão
+  pres.addSection({ title: "Conclusão" });
+  s = conteudo("Conclusão", "Qual usar? Depende do objetivo", 5);
+  const colunas = [
+    ["Quicksort", T.accent2, fa.FaBolt, "Quer velocidade", [`${GANHO}% mais rápido aqui`, "Quase sem memória extra", "Precisa de um bom pivô"], "Carro esportivo: mais rápido, mas pede estrada boa."],
+    ["Mergesort", T.accent1, fa.FaShieldAlt, "Quer garantia", ["n log n até no pior caso", "Estável (mantém a ordem)", "Bom para arquivos enormes"], "Ônibus no horário: nunca surpreende."],
+  ];
+  for (let i = 0; i < colunas.length; i++) {
+    const [nome, cor, Ic, quando, itens, frase] = colunas[i];
+    const x = 0.6 + i * 6.2;
+    cartao(s, x, 1.6, 5.93, 4.15, "coluna " + nome, { fill: T.lt1, line: cor, lineW: 2.5 });
+    await iconeCirculo(s, Ic, x + 0.3, 1.85, 0.8, cor, nome);
+    s.addText([
+      { text: nome, options: { fontSize: 28, bold: true, color: C.text1, breakLine: true } },
+      { text: quando, options: { fontSize: 20, color: C.text2 } },
+    ], { x: x + 1.3, y: 1.8, w: 4.4, h: 0.95, valign: "middle", margin: 0, isTextBox: true, objectName: "título " + nome });
+    s.addText(itens.map((t, k) => ({ text: t, options: { bullet: true, breakLine: k < itens.length - 1 } })), {
+      x: x + 0.35, y: 3.0, w: 5.3, h: 1.65, fontSize: 22, color: C.text1, paraSpaceAfter: 6, valign: "top", margin: 0, isTextBox: true, objectName: "itens " + nome,
+    });
+    s.addText(frase, { x: x + 0.35, y: 4.75, w: 5.3, h: 0.85, fontSize: 20, italic: true, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "frase " + nome });
+  }
+  s.addText("O C++ usa os dois: std::sort (Quick) e std::stable_sort (Merge).", {
+    x: 0.6, y: 5.95, w: 12.13, h: 0.7, fontSize: 22, bold: true, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "frase final",
+  });
+  s.addNotes(
+    `PESSOA 5. Qual é melhor? Depende. Se importa velocidade e memória, Quicksort: ${GANHO}% mais rápido no nosso teste, como um carro esportivo. ` +
+      "Se precisa de garantia no pior caso ou de estabilidade, Mergesort: o ônibus que nunca atrasa. " +
+      "Tanto que a biblioteca do C++ oferece os dois: std::sort e std::stable_sort."
+  );
+
+  // ===== 14. Perguntas
+  s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Conclusão" });
+  s.addText("Perguntas?", { placeholder: "title" });
+  s.addText(`Quick: ${GANHO}% mais rápido  ·  Merge: tempo garantido`, { placeholder: "body" });
+  s.addText("Tudo na pasta trabalho_ordenacao  ·  PAINEL_ADM.bat", { placeholder: "integrantes" });
+  desenharVetor(s, [ORDENADO.slice(0, 4), ORDENADO.slice(4)], 0.8 + larguraGrupos([ORDENADO.slice(0, 4), ORDENADO.slice(4)]) / 2, 1.3, (v, g) => (g === 0 ? AZUL : LARANJA), "final");
+  s.addNotes("TODOS (13:30 a 15:00). Cada um responde sobre a própria parte. A Pessoa 5 conduz.");
+
+  fs.mkdirSync(path.dirname(SAIDA), { recursive: true });
+  await pres.writeFile({ fileName: SAIDA });
+  await aplicarTema(SAIDA, THEME);
+  console.log("Slides gerados em " + SAIDA);
+}
 
 // O pptxgenjs grava a paleta padrão do Office no tema; aqui escrevemos as cores do nosso tema
 // em ppt/theme/theme1.xml para que as cores de esquema (C.accent1 etc.) saiam certas.
@@ -172,485 +560,6 @@ async function aplicarTema(arquivo, tema) {
     zip.file(n, xml);
   }
   fs.writeFileSync(arquivo, await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }));
-}
-
-// ---------------------------------------------------------------- slides
-async function main() {
-  // ===== 1. Capa
-  pres.addSection({ title: "Abertura" });
-  let s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Abertura" });
-  s.addText("Mergesort × Quicksort", { placeholder: "title" });
-  s.addText("Quem ordena mais rápido? 200 ordenações medidas em C++", { placeholder: "body" });
-  s.addText("Integrante 1  ·  Integrante 2  ·  Integrante 3  ·  Integrante 4  ·  Integrante 5", { placeholder: "integrantes" });
-  {
-    const x0 = 0.8;
-    VETOR.forEach((v, i) => {
-      s.addText(String(v), {
-        shape: pres.shapes.ROUNDED_RECTANGLE, rectRadius: 0.08, x: x0 + i * (CW + CG), y: 1.2, w: CW, h: CH,
-        fill: { color: "2B3440" }, line: { color: "2B3440" }, color: C.background1, fontSize: 16, bold: true,
-        align: "center", valign: "middle", margin: 0, objectName: `capa vetor ${v}`,
-      });
-    });
-    [...VETOR].sort((a, b) => a - b).forEach((v, i) => {
-      const cor = i < 4 ? T.accent1 : T.accent2;
-      s.addText(String(v), {
-        shape: pres.shapes.ROUNDED_RECTANGLE, rectRadius: 0.08, x: x0 + i * (CW + CG), y: 1.2 + CH + 0.12, w: CW, h: CH,
-        fill: { color: cor }, line: { color: cor }, color: C.background1, fontSize: 16, bold: true,
-        align: "center", valign: "middle", margin: 0, objectName: `capa ordenado ${v}`,
-      });
-    });
-  }
-  s.addNotes(
-    "PESSOA 1 (0:00 a 2:30, começa aqui).\n" +
-      "Boa tarde. Nosso grupo comparou dois dos algoritmos de ordenação mais usados, o Mergesort e o Quicksort. " +
-      "A pergunta é simples: na prática, qual ordena mais rápido? Para responder, implementamos os dois em C++ e medimos 200 ordenações."
-  );
-
-  // ===== 2. Problema
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Abertura" });
-  s.addText("Por que comparar ordenações?", { placeholder: "title" });
-  s.addText(PESSOA(1), { placeholder: "orador" });
-  s.addText("Ordenar é uma das operações mais comuns da computação, e quase sempre é o primeiro passo de outra.", {
-    x: 0.6, y: 1.6, w: 5.3, h: 1.9, fontSize: 26, bold: true, color: C.text1, valign: "top", margin: 0, isTextBox: true, objectName: "afirmação",
-  });
-  s.addText("A notação O mostra como o custo cresce. Só medindo dá para ver o resto: cache, memória e cópias.", {
-    x: 0.6, y: 3.75, w: 5.3, h: 1.3, fontSize: 18, color: C.accent3, valign: "top", margin: 0, isTextBox: true, objectName: "complemento",
-  });
-  const usos = [
-    [fa.FaSearch, "Busca binária", "Só funciona em dados ordenados"],
-    [fa.FaDatabase, "Bancos de dados", "ORDER BY, índices e junções ordenam o tempo todo"],
-    [fa.FaListOl, "Rankings e relatórios", "Notas, preços, datas, classificação de times"],
-  ];
-  for (let i = 0; i < usos.length; i++) {
-    const y = 1.6 + i * 1.65;
-    cartao(s, 6.5, y, 6.23, 1.35, T.lt2, "cartão " + usos[i][1]);
-    await iconeCirculo(s, usos[i][0], 6.8, y + 0.3, 0.75, T.dk2, usos[i][1]);
-    s.addText([
-      { text: usos[i][1], options: { bold: true, fontSize: 18, color: C.text1, breakLine: true } },
-      { text: usos[i][2], options: { fontSize: 15, color: C.accent3 } },
-    ], { x: 7.8, y: y + 0.15, w: 4.7, h: 1.05, valign: "middle", margin: 0, isTextBox: true, objectName: "texto " + usos[i][1] });
-  }
-  s.addNotes(
-    "PESSOA 1. Ordenação aparece em todo lugar: busca binária só funciona em vetor ordenado, bancos de dados ordenam para montar índices e responder ORDER BY, " +
-      "e qualquer ranking é uma ordenação. Os dois algoritmos têm a mesma complexidade média, O(n log n), mas isso não diz qual é mais rápido de verdade. " +
-      "Por isso medimos."
-  );
-
-  // ===== 3. Metodologia
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Abertura" });
-  s.addText("Metodologia", { placeholder: "title" });
-  s.addText(PESSOA(1), { placeholder: "orador" });
-  const stats = [
-    ["5", "tamanhos de vetor", "30 → 300.000"],
-    ["20", "execuções", "por tamanho e algoritmo"],
-    ["200", "ordenações", "no total"],
-    ["42", "semente fixa", "mesmos dados toda vez"],
-  ];
-  stats.forEach(([n, rot, sub], i) => {
-    const x = 0.6 + i * 3.1;
-    cartao(s, x, 1.55, 2.83, 2.35, T.lt2, "estatística " + rot);
-    s.addText([
-      { text: n, options: { fontSize: 60, bold: true, color: C.text1, breakLine: true, fontFace: THEME.headFontFace } },
-      { text: rot, options: { fontSize: 18, bold: true, color: C.text1, breakLine: true } },
-      { text: sub, options: { fontSize: 14, color: C.accent3 } },
-    ], { x: x + 0.3, y: 1.7, w: 2.3, h: 2.05, valign: "middle", margin: 0, isTextBox: true, objectName: "número " + rot });
-  });
-  const checks = [
-    "Os dois algoritmos ordenam cópias da mesma entrada",
-    "Compilado com g++ -O2 (C++11)",
-    "Todo resultado conferido com std::is_sorted",
-  ];
-  for (let i = 0; i < checks.length; i++) {
-    const x = 0.6 + i * 4.13;
-    await iconeCirculo(s, fa.FaCheck, x, 4.45, 0.55, T.accent4, "check " + i);
-    s.addText(checks[i], { x: x + 0.75, y: 4.35, w: 3.2, h: 0.75, fontSize: 16, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "check texto " + i });
-  }
-  s.addText("Máquina do teste: Intel Xeon 2,8 GHz (troquem pela máquina de vocês ao rodar de novo)", {
-    x: 0.6, y: 5.75, w: 12.1, h: 0.4, fontSize: 12, color: C.accent3, margin: 0, isTextBox: true, objectName: "máquina",
-  });
-  s.addNotes(
-    "PESSOA 1. Testamos 5 tamanhos, de 30 a 300 mil elementos, com 20 execuções cada, para os dois algoritmos: 200 ordenações. " +
-      "Os números são aleatórios, mas gerados com semente fixa 42, então qualquer um que rodar o programa recebe os mesmos dados. " +
-      "Em cada execução os dois algoritmos ordenam cópias do mesmo vetor, para a comparação ser justa, e conferimos se o resultado saiu ordenado. " +
-      "Agora a Pessoa 2 explica como funciona o Mergesort."
-  );
-
-  // ===== 4. Mergesort: como funciona
-  pres.addSection({ title: "Mergesort" });
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Mergesort" });
-  s.addText("Mergesort: dividir e intercalar", { placeholder: "title" });
-  s.addText(PESSOA(2), { placeholder: "orador" });
-  {
-    const xc = 2.75 + 6.3 / 2;
-    const neutro = { fill: T.lt2, text: C.text1 };
-    const azul = { fill: T.accent1, text: C.background1 };
-    const linhas = [
-      ["vetor", null, [VETOR], neutro],
-      ["dividir", null, [[38, 27, 43, 3], [9, 82, 10, 15]], neutro],
-      ["dividir", null, [[38, 27], [43, 3], [9, 82], [10, 15]], neutro],
-      ["intercalar", "pares", [[27, 38], [3, 43], [9, 82], [10, 15]], azul],
-      ["intercalar", "metades", [[3, 27, 38, 43], [9, 10, 15, 82]], azul],
-      ["ordenado", null, [[3, 9, 10, 15, 27, 38, 43, 82]], azul],
-    ];
-    linhas.forEach(([rot, sub, grupos, est], i) => {
-      const y = 1.55 + i * 0.78;
-      rotuloLinha(s, rot, y, sub);
-      desenharVetor(s, grupos, xc, y, est, `merge linha ${i + 1}`);
-    });
-  }
-  lista(s, [
-    "Divide o vetor ao meio até sobrarem pedaços de 1 elemento",
-    "Intercala dois pedaços já ordenados comparando o primeiro de cada um",
-    "Usa um vetor auxiliar do mesmo tamanho",
-  ], 9.55, 1.6, 3.2, 4.5);
-  s.addNotes(
-    "PESSOA 2 (2:30 a 5:00). O Mergesort usa dividir e conquistar. Ele corta o vetor ao meio, e corta de novo, até sobrar um elemento em cada pedaço, " +
-      "e um elemento sozinho já está ordenado. Depois intercala os pedaços: compara o primeiro de cada metade, pega o menor, e repete. " +
-      "Nas linhas cinza o vetor é dividido; nas azuis ele é intercalado. No código isso são as funções mergesortRec e intercalar."
-  );
-
-  // ===== 5. Mergesort: custo
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Mergesort" });
-  s.addText("Mergesort: custo previsível", { placeholder: "title" });
-  s.addText(PESSOA(2), { placeholder: "orador" });
-  cartao(s, 0.6, 1.55, 4.6, 4.6, T.accent1, "destaque níveis");
-  s.addText([
-    { text: "19", options: { fontSize: 88, bold: true, color: C.background1, breakLine: true, fontFace: THEME.headFontFace } },
-    { text: "níveis de divisão", options: { fontSize: 22, bold: true, color: C.background1, breakLine: true } },
-    { text: "para 300.000 elementos (log de 300.000 na base 2 ≈ 18,2). Em cada nível o algoritmo percorre os n elementos: n × log n.", options: { fontSize: 15, color: C.background1 } },
-  ], { x: 0.95, y: 1.8, w: 3.9, h: 4.1, valign: "middle", margin: 0, isTextBox: true, objectName: "texto níveis" });
-  const custosM = [
-    [fa.FaClock, "Tempo: O(n log n)", "No melhor, no médio e no pior caso"],
-    [fa.FaMemory, "Memória extra: O(n)", "Vetor auxiliar: ~1,2 MB para 300.000 inteiros"],
-    [fa.FaBalanceScale, "Estável", "Elementos iguais mantêm a ordem original"],
-  ];
-  for (let i = 0; i < custosM.length; i++) {
-    const y = 1.55 + i * 1.6;
-    cartao(s, 5.6, y, 7.13, 1.3, T.lt2, "cartão " + custosM[i][1]);
-    await iconeCirculo(s, custosM[i][0], 5.9, y + 0.28, 0.75, T.accent1, custosM[i][1]);
-    s.addText([
-      { text: custosM[i][1], options: { bold: true, fontSize: 18, color: C.text1, breakLine: true } },
-      { text: custosM[i][2], options: { fontSize: 15, color: C.accent3 } },
-    ], { x: 6.9, y: y + 0.12, w: 5.6, h: 1.05, valign: "middle", margin: 0, isTextBox: true, objectName: "texto " + custosM[i][1] });
-  }
-  s.addNotes(
-    "PESSOA 2. Como o vetor é cortado ao meio, o número de níveis é log de n na base 2: para 300 mil, uns 19 níveis. " +
-      "Em cada nível a intercalação passa por todos os n elementos, por isso o custo é n log n, e isso vale sempre, até no pior caso. " +
-      "O preço é memória: precisa de um vetor auxiliar do mesmo tamanho. E ele é estável. Agora a Pessoa 3 com o Quicksort."
-  );
-
-  // ===== 6. Quicksort: como funciona
-  pres.addSection({ title: "Quicksort" });
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Quicksort" });
-  s.addText("Quicksort: escolher o pivô e particionar", { placeholder: "title" });
-  s.addText(PESSOA(3), { placeholder: "orador" });
-  {
-    const xc = 2.75 + 6.3 / 2;
-    const neutro = { fill: T.lt2, text: C.text1 };
-    const laranja = { fill: T.accent2, text: C.background1 };
-    const linhas = [
-      ["escolher pivô", "início, meio, fim", [VETOR], (v, g, i) => (v === 15 ? laranja : i === 0 || i === 3 ? { fill: T.lt1, text: C.text1, line: T.accent2 } : neutro)],
-      ["particionar", "≤ 15 | ≥ 15", [[15, 10, 9, 3], [43, 82, 27, 38]], neutro],
-      ["repetir", "em cada lado", [[3, 9, 10, 15], [27, 38, 43, 82]], laranja],
-      ["ordenado", null, [[3, 9, 10, 15, 27, 38, 43, 82]], laranja],
-    ];
-    linhas.forEach(([rot, sub, grupos, est], i) => {
-      const y = 1.7 + i * 1.1;
-      rotuloLinha(s, rot, y, sub);
-      desenharVetor(s, grupos, xc, y, est, `quick linha ${i + 1}`);
-    });
-  }
-  lista(s, [
-    "Pivô = mediana de 38, 3 e 15 (início, meio e fim) = 15",
-    "Menores ou iguais ao pivô vão para a esquerda; maiores ou iguais, para a direita",
-    "Trabalha no próprio vetor, sem vetor auxiliar",
-  ], 9.55, 1.6, 3.2, 4.5);
-  s.addNotes(
-    "PESSOA 3 (5:00 a 7:30). O Quicksort também divide, mas de outro jeito. Primeiro escolhe um pivô. Nós usamos a mediana de três: " +
-      "olhamos o primeiro, o do meio e o último (38, 3 e 15) e pegamos o do meio, 15. Depois particionamos: tudo que é menor vai para a esquerda, " +
-      "tudo que é maior vai para a direita, trocando elementos dentro do próprio vetor. Aí repete em cada lado. Não precisa de vetor auxiliar."
-  );
-
-  // ===== 7. Quicksort: custo
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Quicksort" });
-  s.addText("Quicksort: o risco do pior caso", { placeholder: "title" });
-  s.addText(PESSOA(3), { placeholder: "orador" });
-  const custosQ = [
-    ["Caso médio", "O(n log n)"],
-    ["Pior caso", "O(n²)"],
-    ["Memória extra", "O(log n)"],
-    ["Estável?", "Não"],
-  ];
-  custosQ.forEach(([rot, val], i) => {
-    const x = 0.6 + (i % 2) * 3.05, y = 1.55 + Math.floor(i / 2) * 2.0;
-    cartao(s, x, y, 2.8, 1.75, T.lt2, "custo " + rot);
-    s.addText([
-      { text: rot, options: { fontSize: 15, color: C.accent3, breakLine: true } },
-      { text: val, options: { fontSize: 32, bold: true, color: C.text1, fontFace: THEME.headFontFace } },
-    ], { x: x + 0.25, y: y + 0.15, w: 2.35, h: 1.45, valign: "middle", margin: 0, isTextBox: true, objectName: "valor " + rot });
-  });
-  s.addText("A memória extra é só a pilha da recursão, porque o algoritmo trabalha no próprio vetor.", {
-    x: 0.6, y: 5.6, w: 5.85, h: 0.7, fontSize: 13, color: C.accent3, valign: "top", margin: 0, isTextBox: true, objectName: "nota memória",
-  });
-  cartao(s, 6.95, 1.55, 5.78, 4.75, T.dk2, "cartão pior caso");
-  await iconeCirculo(s, fa.FaExclamationTriangle, 7.3, 1.85, 0.7, T.accent2, "alerta");
-  const ordQ = CEN.ordenado ? CEN.ordenado["quicksort:300000"].media : null;
-  s.addText([
-    { text: "O pior caso", options: { fontSize: 20, bold: true, color: C.background1, breakLine: true } },
-    { text: "Pivô = primeiro elemento + vetor já ordenado: cada partição separa só 1 elemento.", options: { fontSize: 16, color: C.background1, breakLine: true } },
-    { text: " ", options: { fontSize: 8, breakLine: true } },
-    { text: "300.000 elementos ≈ 45 bilhões de comparações, ou minutos de execução.", options: { fontSize: 16, color: C.background1, breakLine: true } },
-    { text: " ", options: { fontSize: 8, breakLine: true } },
-    { text: ordQ ? `Nossa defesa, a mediana de três: vetor já ordenado de 300.000 em ${ms(ordQ)} ms.` : "Nossa defesa: mediana de três.", options: { fontSize: 16, bold: true, color: C.background1 } },
-  ], { x: 7.3, y: 2.75, w: 5.1, h: 3.35, valign: "top", margin: 0, isTextBox: true, objectName: "texto pior caso" });
-  s.addNotes(
-    "PESSOA 3. Na média o Quicksort também é n log n. Mas se o pivô for sempre o menor ou o maior elemento, cada partição separa um elemento só, " +
-      "e o custo vira n ao quadrado. Isso acontece, por exemplo, se o pivô for o primeiro elemento e o vetor já estiver ordenado: com 300 mil, " +
-      "seriam uns 45 bilhões de comparações. A mediana de três evita isso: no nosso teste, um vetor já ordenado de 300 mil levou poucos milissegundos. " +
-      "Ele não é estável e quase não usa memória extra. Agora a Pessoa 4 mostra como medimos."
-  );
-
-  // ===== 8. Como medimos
-  pres.addSection({ title: "Implementação" });
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Implementação" });
-  s.addText("Como medimos", { placeholder: "title" });
-  s.addText(PESSOA(4), { placeholder: "orador" });
-  const passos = [
-    [fa.FaRandom, "Gerar", "Vetor aleatório com semente 42"],
-    [fa.FaCopy, "Copiar", "A mesma entrada para os dois algoritmos"],
-    [fa.FaStopwatch, "Cronometrar", "steady_clock só em volta da ordenação"],
-    [fa.FaCheckDouble, "Conferir", "std::is_sorted em todo resultado"],
-    [fa.FaFileCsv, "Salvar", "CSV bruto, resumo e relatório HTML"],
-  ];
-  for (let i = 0; i < passos.length; i++) {
-    const x = 0.6 + i * 2.48;
-    await iconeCirculo(s, passos[i][0], x + 0.62, 1.6, 0.95, T.dk2, passos[i][1]);
-    if (i < passos.length - 1) {
-      s.addShape(pres.shapes.LINE, { x: x + 1.75, y: 2.075, w: 1.17, h: 0, line: { color: "B8BFC9", width: 1.5, endArrowType: "triangle" }, objectName: "seta " + i });
-    }
-    s.addText([
-      { text: `${i + 1}. ${passos[i][1]}`, options: { fontSize: 17, bold: true, color: C.text1, breakLine: true } },
-      { text: passos[i][2], options: { fontSize: 14, color: C.accent3 } },
-    ], { x, y: 2.75, w: 2.2, h: 1.2, align: "center", valign: "top", margin: 0, isTextBox: true, objectName: "passo " + passos[i][1] });
-  }
-  const notas = [
-    ["Aquecimento", "1 rodada descartada por tamanho, para tirar o efeito de cache frio e da primeira alocação."],
-    ["Vetores pequenos", "30 elementos ordenam em menos de 1 µs. Cada medição ordena k cópias e divide o tempo por k (k = 20.000 / n)."],
-  ];
-  notas.forEach(([t, d], i) => {
-    const x = 0.6 + i * 6.2;
-    cartao(s, x, 4.45, 5.93, 1.75, T.lt2, "nota " + t);
-    s.addText([
-      { text: t, options: { fontSize: 17, bold: true, color: C.text1, breakLine: true } },
-      { text: d, options: { fontSize: 15, color: C.text1 } },
-    ], { x: x + 0.3, y: 4.6, w: 5.35, h: 1.45, valign: "middle", margin: 0, isTextBox: true, objectName: "texto nota " + t });
-  });
-  s.addNotes(
-    "PESSOA 4 (7:30 a 10:30). Para cada execução: geramos um vetor aleatório, fazemos uma cópia para cada algoritmo, cronometramos só a chamada de ordenação " +
-      "com o steady_clock do C++, conferimos se saiu ordenado e salvamos em CSV. Dois cuidados: descartamos uma rodada de aquecimento, " +
-      "e para vetores pequenos, que ordenam mais rápido do que a precisão do relógio, ordenamos várias cópias e dividimos o tempo."
-  );
-
-  // ===== 9. Demo
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Implementação" });
-  s.addText("Demonstração: o painel ADM", { placeholder: "title" });
-  s.addText(PESSOA(4), { placeholder: "orador" });
-  cartao(s, 0.6, 1.55, 7.2, 4.75, T.dk2, "terminal");
-  const term = [
-    "==============================================",
-    " PAINEL ADM - Benchmark Mergesort x Quicksort",
-    "==============================================",
-    "",
-    " EXECUCAO",
-    "   [1] Abrir o painel do benchmark",
-    "   [2] Rodar o teste padrao do trabalho",
-    "   [3] Rodar os 4 cenarios",
-    " RESULTADOS E APRESENTACAO",
-    "   [4] Abrir relatorio (navegador)",
-    "   [5] Abrir slides da apresentacao",
-    " MANUTENCAO",
-    "   [7] Compilar de novo   [8] Pasta   [9] Apagar",
-    "",
-    " Opcao: 2",
-  ];
-  s.addText(term.join("\n"), { x: 0.85, y: 1.75, w: 6.8, h: 4.35, fontFace: "Courier New", fontSize: 13, color: "D7DEE7", valign: "top", margin: 0, isTextBox: true, objectName: "texto terminal" });
-  const demo = [
-    ["1", "Duplo clique em PAINEL_ADM.bat: na 1ª vez ele compila o código C++"],
-    ["2", "Opção [2]: roda as 200 ordenações (cerca de 2 s)"],
-    ["3", "O relatório com tabela e gráfico abre no navegador"],
-  ];
-  demo.forEach(([n, t], i) => {
-    const y = 1.6 + i * 1.05;
-    s.addText(n, { shape: pres.shapes.OVAL, x: 8.25, y, w: 0.6, h: 0.6, fill: { color: T.accent2 }, line: { color: T.accent2 }, color: C.background1, fontSize: 18, bold: true, align: "center", valign: "middle", margin: 0, objectName: "número demo " + n });
-    s.addText(t, { x: 9.05, y: y - 0.1, w: 3.68, h: 0.8, fontSize: 16, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "passo demo " + n });
-  });
-  s.addText([
-    { text: "Linha de comando, sem menu (pasta build):", options: { fontSize: 13, color: C.accent3, breakLine: true } },
-    { text: "benchmark --rodar --cenario inverso", options: { fontSize: 13, color: C.text1, fontFace: "Courier New", breakLine: true } },
-    { text: " ", options: { fontSize: 6, breakLine: true } },
-    { text: "Precisa do Dev-C++ ou MinGW instalado. Plano B: um print desta tela.", options: { fontSize: 13, color: C.accent3 } },
-  ], { x: 8.25, y: 4.75, w: 4.48, h: 1.55, valign: "top", margin: 0, isTextBox: true, objectName: "linha de comando" });
-  s.addNotes(
-    "PESSOA 4. [Abrir PAINEL_ADM.bat] Este é o painel que fizemos. Ele não traz nenhum executável pronto: na primeira vez, procura o compilador C++ instalado e compila o código. A opção 2 roda o teste completo, as 200 ordenações, em uns 2 segundos, " +
-      "e abre o relatório no navegador. A opção 1 abre o painel do próprio programa, onde dá para mudar tamanhos, número de execuções, semente e o tipo de entrada. " +
-      "Se o computador da sala não tiver compilador, mostrar o print. Agora a Pessoa 5 com os resultados."
-  );
-
-  // ===== 10. Tabela
-  pres.addSection({ title: "Resultados" });
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Resultados" });
-  s.addText("Resultados: média de 20 execuções", { placeholder: "title" });
-  s.addText(PESSOA(5), { placeholder: "orador" });
-  const cab = (t, al = "right") => ({ text: t, options: { bold: true, color: C.text1, fill: { color: T.lt2 }, align: al } });
-  const linhasTab = [[cab("n", "left"), cab("Mergesort (ms)"), cab("Quicksort (ms)"), cab("Quicksort vs. Mergesort")]];
-  NS.forEach((n) => {
-    const dest = n === 300000;
-    const o = (al = "right") => ({ align: al, bold: dest, color: C.text1 });
-    linhasTab.push([
-      { text: milhar(n), options: o("left") },
-      { text: ms(m(n)), options: o() },
-      { text: ms(q(n)), options: o() },
-      { text: comp(n), options: o() },
-    ]);
-  });
-  s.addTable(linhasTab, {
-    x: 0.6, y: 1.6, w: 8.2, colW: [1.6, 2.0, 2.0, 2.6], rowH: 0.62, fontSize: 16, fontFace: THEME.bodyFontFace,
-    valign: "middle", border: { type: "solid", pt: 0.75, color: "D5DAE1" }, margin: [0, 0.15, 0, 0.15], objectName: "tabela resultados",
-  });
-  cartao(s, 9.25, 1.6, 3.48, 2.0, T.accent2, "destaque ganho");
-  s.addText([
-    { text: `${num(ganho(300000), 0)}%`, options: { fontSize: 54, bold: true, color: C.background1, breakLine: true, fontFace: THEME.headFontFace } },
-    { text: "mais rápido o Quicksort com 300.000", options: { fontSize: 15, color: C.background1 } },
-  ], { x: 9.5, y: 1.7, w: 3.0, h: 1.8, valign: "middle", margin: 0, isTextBox: true, objectName: "texto ganho" });
-  cartao(s, 9.25, 3.85, 3.48, 1.65, T.lt2, "destaque tempo");
-  s.addText([
-    { text: "< 2 s", options: { fontSize: 40, bold: true, color: C.text1, breakLine: true, fontFace: THEME.headFontFace } },
-    { text: "para as 200 ordenações", options: { fontSize: 15, color: C.accent3 } },
-  ], { x: 9.5, y: 3.95, w: 3.0, h: 1.45, valign: "middle", margin: 0, isTextBox: true, objectName: "texto tempo" });
-  s.addText("Vetores de 30 e 300 elementos ordenam em microssegundos; ali a diferença percentual oscila de uma rodada para outra.", {
-    x: 0.6, y: 5.6, w: 8.2, h: 0.6, fontSize: 12, color: C.accent3, valign: "top", margin: 0, isTextBox: true, objectName: "nota tabela",
-  });
-  s.addNotes(
-    `PESSOA 5 (10:30 a 13:30). Aqui estão as médias. Nos tamanhos grandes o Quicksort foi consistentemente mais rápido: ${num(ganho(300000), 0)}% em 300 mil elementos ` +
-      `(${ms(q(300000))} ms contra ${ms(m(300000))} ms). Nos vetores pequenos tudo leva microssegundos e a porcentagem oscila entre rodadas, então não dá para tirar conclusão forte ali. ` +
-      "O teste inteiro leva menos de 2 segundos."
-  );
-
-  // ===== 11. Gráfico
-  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Resultados" });
-  s.addText("O crescimento confirma n log n", { placeholder: "title" });
-  s.addText(PESSOA(5), { placeholder: "orador" });
-  s.addChart(pres.charts.LINE, [
-    { name: "Mergesort", labels: NS.map(milhar), values: NS.map(m) },
-    { name: "Quicksort", labels: NS.map(milhar), values: NS.map(q) },
-  ], {
-    x: 0.6, y: 1.5, w: 8.1, h: 4.9, chartColors: [T.accent1, T.accent2], lineSize: 3, lineDataSymbol: "circle", lineDataSymbolSize: 9,
-    valAxisLogScaleBase: 10, valAxisMinVal: 0.0001, valAxisMaxVal: 100, valAxisLabelFormatCode: "General",
-    showTitle: true, title: "Tempo médio (ms), escala logarítmica", titleFontSize: 14, titleColor: T.dk1, titleFontFace: "+mn-lt",
-    showLegend: true, legendPos: "t", legendFontSize: 13, legendFontFace: "+mn-lt", legendColor: T.dk1,
-    catAxisTitle: "Tamanho do vetor (n)", showCatAxisTitle: true, catAxisTitleFontSize: 12, catAxisTitleColor: MUTED_HEX,
-    catAxisLabelColor: MUTED_HEX, valAxisLabelColor: MUTED_HEX, catAxisLabelFontSize: 12, valAxisLabelFontSize: 12,
-    catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt", catAxisTitleFontFace: "+mn-lt",
-    valGridLine: { color: "E3E6EA", size: 0.75 }, catGridLine: { style: "none" },
-    objectName: "gráfico crescimento",
-  });
-  const callouts = [
-    [`${num(razaoM, 1)}×`, "mais tempo quando n cresce 10× (de 30.000 para 300.000)", T.accent1],
-    [`${num(prevNlogN, 1)}×`, "é o que n log n prevê para o mesmo salto", T.dk2],
-    ["100×", "seria o salto de um algoritmo O(n²)", "8A939F"],
-  ];
-  callouts.forEach(([v, t, cor], i) => {
-    const y = 1.55 + i * 1.65;
-    s.addText(v, { x: 9.1, y, w: 1.9, h: 1.3, fontSize: 40, bold: true, color: cor === "8A939F" ? C.accent3 : cor === T.accent1 ? C.accent1 : C.text1, valign: "middle", margin: 0, isTextBox: true, fontFace: THEME.headFontFace, objectName: "valor " + i });
-    s.addText(t, { x: 11.05, y, w: 1.68, h: 1.3, fontSize: 13, color: C.text1, valign: "middle", margin: 0, isTextBox: true, objectName: "rótulo " + i });
-  });
-  s.addNotes(
-    `PESSOA 5. Em escala logarítmica, as duas linhas são quase retas e paralelas: os dois crescem do mesmo jeito. Quando o vetor fica 10 vezes maior, ` +
-      `de 30 mil para 300 mil, o tempo cresceu ${num(razaoM, 1)} vezes. É exatamente o que n log n prevê, ${num(prevNlogN, 1)} vezes. Um algoritmo quadrático cresceria 100 vezes.`
-  );
-
-  // ===== 12. Cenários
-  if (Object.keys(CEN).length === 4) {
-    s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Resultados" });
-    s.addText("E se a entrada não for aleatória?", { placeholder: "title" });
-    s.addText(PESSOA(5), { placeholder: "orador" });
-    const labels = CENARIOS.map((c) => ROT_CEN[c]);
-    s.addChart(pres.charts.BAR, [
-      { name: "Mergesort", labels, values: CENARIOS.map((c) => CEN[c]["mergesort:300000"].media) },
-      { name: "Quicksort", labels, values: CENARIOS.map((c) => CEN[c]["quicksort:300000"].media) },
-    ], {
-      x: 0.6, y: 1.5, w: 8.1, h: 4.9, barDir: "col", barGrouping: "clustered", barGapWidthPct: 60, chartColors: [T.accent1, T.accent2],
-      showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", dataLabelFontSize: 12, dataLabelColor: T.dk1, dataLabelFontFace: "+mn-lt",
-      showTitle: true, title: "Tempo médio (ms) com n = 300.000", titleFontSize: 14, titleColor: T.dk1, titleFontFace: "+mn-lt",
-      showLegend: true, legendPos: "t", legendFontSize: 13, legendFontFace: "+mn-lt", legendColor: T.dk1,
-      catAxisLabelColor: MUTED_HEX, valAxisLabelColor: MUTED_HEX, catAxisLabelFontSize: 13, valAxisLabelFontSize: 12,
-      catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt",
-      valGridLine: { color: "E3E6EA", size: 0.75 }, catGridLine: { style: "none" },
-      objectName: "gráfico cenários",
-    });
-    const rep = CEN.repetidos;
-    const vezesRep = rep["mergesort:300000"].media / rep["quicksort:300000"].media;
-    const vezesOrd = CEN.aleatorio["mergesort:300000"].media / CEN.ordenado["mergesort:300000"].media;
-    lista(s, [
-      "O Quicksort venceu nos 4 cenários",
-      `Entrada já ordenada ou invertida: os dois ficam ~${num(vezesOrd, 0)}× mais rápidos (menos trocas, desvios previsíveis)`,
-      `Muitos valores repetidos: Quicksort ${num(vezesRep, 1)}× mais rápido`,
-      "A mediana de três evitou o pior caso nas entradas ordenadas",
-    ], 9.1, 1.6, 3.63, 4.7);
-    s.addNotes(
-      "PESSOA 5. Também testamos entradas que não são aleatórias, usando a opção 3 do painel. O Quicksort ganhou em todas. " +
-        "Com entrada já ordenada ou invertida os dois ficam bem mais rápidos, e o Quicksort não caiu no pior caso graças à mediana de três. " +
-        "Com muitos valores repetidos a vantagem do Quicksort foi a maior."
-    );
-  }
-
-  // ===== 13. Conclusão
-  pres.addSection({ title: "Conclusão" });
-  s = pres.addSlide({ masterName: "ESCURO", sectionTitle: "Conclusão" });
-  s.addText("Conclusão: depende do que você precisa", { placeholder: "title" });
-  s.addText(PESSOA(5), { placeholder: "orador" });
-  const colunas = [
-    ["Quicksort", T.accent2, fa.FaBolt, ["Mais rápido na média (~15% aqui)", "Não precisa de memória extra", "Exige um bom pivô para fugir do O(n²)"]],
-    ["Mergesort", T.accent1, fa.FaShieldAlt, ["O(n log n) garantido, até no pior caso", "Estável: mantém a ordem de iguais", "Bom para listas ligadas e arquivos grandes"]],
-  ];
-  for (let i = 0; i < colunas.length; i++) {
-    const [nome, cor, Ic, itens] = colunas[i];
-    const x = 0.6 + i * 6.2;
-    cartao(s, x, 1.55, 5.93, 3.1, "222B36", "coluna " + nome);
-    await iconeCirculo(s, Ic, x + 0.35, 1.85, 0.75, cor, nome);
-    s.addText(`Use ${nome} quando…`, { x: x + 1.3, y: 1.85, w: 4.4, h: 0.75, fontSize: 22, bold: true, color: C.background1, valign: "middle", margin: 0, isTextBox: true, objectName: "título " + nome });
-    s.addText(itens.map((t, k) => ({ text: t, options: { bullet: true, breakLine: k < itens.length - 1 } })), {
-      x: x + 0.35, y: 2.85, w: 5.3, h: 1.6, fontSize: 18, color: C.background1, paraSpaceAfter: 10, valign: "top", margin: 0, isTextBox: true, objectName: "itens " + nome,
-    });
-  }
-  s.addText("Na prática o C++ usa os dois: std::sort (introsort, baseado no Quicksort) e std::stable_sort (baseado no Mergesort).", {
-    x: 0.6, y: 5.0, w: 12.13, h: 0.7, fontSize: 18, color: C.background2, valign: "middle", margin: 0, isTextBox: true, objectName: "frase final",
-  });
-  s.addNotes(
-    "PESSOA 5. Então, qual é melhor? Depende. Se o que importa é velocidade média e memória, Quicksort, que foi uns 15% mais rápido no nosso teste. " +
-      "Se precisa de garantia de tempo no pior caso ou de estabilidade, Mergesort. Tanto que a biblioteca padrão do C++ oferece os dois: " +
-      "std::sort é baseado no Quicksort e std::stable_sort no Mergesort."
-  );
-
-  // ===== 14. Perguntas
-  s = pres.addSlide({ masterName: "ESCURO", sectionTitle: "Conclusão" });
-  s.addText("Perguntas?", { x: 0.6, y: 2.5, w: 12.13, h: 1.3, fontSize: 60, bold: true, color: C.background1, fontFace: THEME.headFontFace, valign: "middle", margin: 0, isTextBox: true, objectName: "perguntas" });
-  s.addText("Código, painel ADM e resultados: pasta trabalho_ordenacao  ·  PAINEL_ADM.bat", {
-    x: 0.6, y: 3.9, w: 12.13, h: 0.6, fontSize: 18, color: C.background2, valign: "top", margin: 0, isTextBox: true, objectName: "onde encontrar",
-  });
-  [3, 9, 10, 15, 27, 38, 43, 82].forEach((v, i) => {
-    const cor = i < 4 ? T.accent1 : T.accent2;
-    s.addText(String(v), {
-      shape: pres.shapes.ROUNDED_RECTANGLE, rectRadius: 0.08, x: 0.6 + i * (CW + CG), y: 5.5, w: CW, h: CH,
-      fill: { color: cor }, line: { color: cor }, color: C.background1, fontSize: 16, bold: true, align: "center", valign: "middle", margin: 0, objectName: `final ${v}`,
-    });
-  });
-  s.addNotes("TODOS (13:30 a 15:00). Cada um responde as perguntas sobre a própria parte. A Pessoa 5 conduz.");
-
-  fs.mkdirSync(path.dirname(SAIDA), { recursive: true });
-  await pres.writeFile({ fileName: SAIDA });
-  await aplicarTema(SAIDA, THEME);
-  console.log("Slides gerados em " + SAIDA);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
