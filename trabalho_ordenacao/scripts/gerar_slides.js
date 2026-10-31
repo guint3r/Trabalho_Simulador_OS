@@ -165,7 +165,7 @@ async function main() {
   let s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Abertura" });
   s.addText("Mergesort × Quicksort", { placeholder: "title" });
   s.addText("Quem ordena mais rápido? Medimos 200 ordenações em C++", { placeholder: "body" });
-  s.addText("Integrante 1  ·  Integrante 2  ·  Integrante 3  ·  Integrante 4  ·  Integrante 5", { placeholder: "integrantes" });
+  s.addText("Juan  ·  Joao Vitor  ·  Jefferson  ·  Guilherme S  ·  Igor Jesus", { placeholder: "integrantes" });
   desenharVetor(s, [VETOR], 0.8 + larguraGrupos([VETOR]) / 2, 0.9, NEUTRO, "capa vetor");
   desenharVetor(s, [ORDENADO.slice(0, 4), ORDENADO.slice(4)], 0.8 + larguraGrupos([ORDENADO.slice(0, 4), ORDENADO.slice(4)]) / 2, 1.55, (v, g) => (g === 0 ? AZUL : LARANJA), "capa ordenado");
   s.addNotes(
