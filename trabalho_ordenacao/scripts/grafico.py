@@ -1,5 +1,7 @@
-"""Gera grafico.png a partir de resultados_resumo.csv (requer matplotlib)."""
+"""Gera resultados/grafico.png a partir de resultados/resultados_resumo.csv (requer matplotlib).
+Uso (na pasta do projeto): python scripts/grafico.py"""
 import csv
+import os
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -7,7 +9,9 @@ import matplotlib.ticker
 
 CORES = {"mergesort": "#2a78d6", "quicksort": "#eb6834"}
 dados = {}
-with open("resultados_resumo.csv") as f:
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RES = os.path.join(RAIZ, "resultados")
+with open(os.path.join(RES, "resultados_resumo.csv")) as f:
     for linha in csv.DictReader(f):
         dados.setdefault(linha["algoritmo"], []).append(
             (int(linha["n"]), float(linha["media_ms"]), float(linha["desvio_ms"])))
@@ -31,5 +35,5 @@ for s in ("left", "bottom"): ax.spines[s].set_color("#b5b4ad")
 ax.tick_params(colors="#52514e")
 ax.legend(frameon=False, loc="upper left")
 fig.tight_layout()
-fig.savefig("grafico.png")
+fig.savefig(os.path.join(RES, "grafico.png"))
 print("grafico.png gerado")

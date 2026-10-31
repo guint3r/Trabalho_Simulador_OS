@@ -1,5 +1,7 @@
-"""Gera divisao_trabalho.pdf (plano da apresentacao para 5 pessoas). Requer reportlab."""
+"""Gera apresentacao/divisao_trabalho.pdf (plano da apresentacao para 5 pessoas). Requer reportlab.
+Uso (na pasta do projeto): python scripts/gerar_pdf.py"""
 import csv
+import os
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4
@@ -44,8 +46,10 @@ def tabela(linhas, larguras, cab=True, zebra=True):
     t.setStyle(TableStyle(st)); return t
 
 # ---------- dados medidos ----------
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RES = os.path.join(RAIZ, "resultados")
 res = {}
-with open("resultados_resumo.csv") as f:
+with open(os.path.join(RES, "resultados_resumo.csv")) as f:
     for r in csv.DictReader(f):
         res[(r["algoritmo"], int(r["n"]))] = float(r["media_ms"]), float(r["desvio_ms"])
 NS = [30, 300, 3000, 30000, 300000]
@@ -62,8 +66,8 @@ H(Spacer(1, 10))
 H(P("<b>O trabalho:</b> implementar Mergesort e Quicksort em C++, medir o tempo de cada um com vetores de "
     "<b>30, 300, 3.000, 30.000 e 300.000</b> inteiros aleatórios, <b>20 execuções por tamanho</b> "
     "(5 × 20 × 2 = <b>200 ordenações</b>) e apresentar a comparação em 15 minutos. "
-    "O código já está pronto em <font name='DVM'>benchmark_ordenacao/</font>; o que falta é estudar, "
-    "montar os slides e ensaiar."))
+    "Já está tudo pronto na pasta <font name='DVM'>trabalho_ordenacao/</font>: o programa (<font name='DVM'>Benchmark.exe</font>), o painel <font name='DVM'>PAINEL_ADM.bat</font> e os slides (<font name='DVM'>apresentacao/slides.pptx</font>, com o roteiro de cada um nas anotações). "
+    "O que falta é estudar a sua parte, colocar os nomes e ensaiar."))
 H(Spacer(1, 6))
 H(P("Como preencher: escrevam o nome de cada integrante na coluna “Responsável”. "
     "Cada pessoa fala ~2,5 a 3 min e prepara os próprios slides. Os tempos já somam 15:00.", pequeno))
@@ -75,8 +79,8 @@ H(tabela([
     ["2:30 – 5:00", "<b>2. Mergesort: como funciona e complexidade</b>", "Pessoa 2: ____________", "4 – 5"],
     ["5:00 – 7:30", "<b>3. Quicksort: como funciona e complexidade</b>", "Pessoa 3: ____________", "6 – 7"],
     ["7:30 – 10:30", "<b>4. Implementação, medição e demonstração ao vivo</b>", "Pessoa 4: ____________", "8 – 9"],
-    ["10:30 – 13:30", "<b>5. Resultados, análise e conclusão</b>", "Pessoa 5: ____________", "10 – 12"],
-    ["13:30 – 15:00", "Perguntas (cada um responde sobre a sua parte)", "Todos", "13"],
+    ["10:30 – 13:30", "<b>5. Resultados, análise e conclusão</b>", "Pessoa 5: ____________", "10 – 13"],
+    ["13:30 – 15:00", "Perguntas (cada um responde sobre a sua parte)", "Todos", "14"],
 ], [2.5 * cm, 7.4 * cm, 4.6 * cm, 2.0 * cm]))
 H(Spacer(1, 10))
 H(P("Linha condutora (o que a plateia deve levar para casa)", h1))
@@ -87,7 +91,7 @@ historia.extend(bullets([
     "(melhor uso de cache) e não precisa copiar para um vetor auxiliar.",
     "O Mergesort ganha em garantia: é O(n log n) mesmo no pior caso e é estável. O Quicksort pode cair para "
     "O(n²) com pivô ruim, e por isso usamos a mediana de três.",
-    "Nos tamanhos pequenos (30 e 300) a diferença some: tudo leva microssegundos.",
+    "Nos tamanhos pequenos (30 e 300) tudo leva microssegundos e a diferença oscila de uma rodada para outra.",
 ]))
 
 H(PageBreak())
@@ -104,8 +108,8 @@ pessoas = [
         "máquina usada (processador, sistema operacional).",
     ], [
         "Anotar a configuração da máquina onde o teste final for rodado.",
-        "Fazer o modelo visual dos slides (cores, fonte) e compartilhar com o grupo no 1º dia.",
-        "Juntar os slides de todos em um arquivo só e controlar o tempo no ensaio.",
+        "Colocar os nomes do grupo no slide 1.",
+        "Controlar o tempo no ensaio (cada bloco tem horário de início na tabela da página 1).",
     ]),
     ("Pessoa 2 — Mergesort", "2:30 – 5:00 · slides 4 e 5", AZUL, [
         "<b>Slide 4:</b> ideia de dividir e conquistar: divide o vetor ao meio até sobrar 1 elemento e "
@@ -115,7 +119,7 @@ pessoas = [
     ], [
         "Estudar as funções <font name='DVM'>merge</font> e <font name='DVM'>mergesortRec</font> em "
         "<font name='DVM'>benchmark.cpp</font>.",
-        "Desenhar a árvore de divisão do exemplo (pode ser à mão e fotografar, ou no próprio slide).",
+        "O diagrama do exemplo já está no slide 4: treinar a explicação linha por linha.",
         "Preparar resposta para: “por que log n níveis?”.",
     ]),
     ("Pessoa 3 — Quicksort", "5:00 – 7:30 · slides 6 e 7", LARANJA, [
@@ -125,30 +129,31 @@ pessoas = [
         "recursão, O(log n); não é estável. Explicar a mediana de três como defesa contra o pior caso.",
     ], [
         "Estudar <font name='DVM'>quicksortRec</font> em <font name='DVM'>benchmark.cpp</font>.",
-        "Combinar com a Pessoa 2 para usar o mesmo exemplo de 8 números.",
+        "O slide 6 usa o mesmo exemplo de 8 números do slide 4: treinar a partição passo a passo.",
         "Preparar resposta para: “o que acontece com um vetor já ordenado e pivô no primeiro elemento?”.",
     ]),
     ("Pessoa 4 — Implementação, medição e demo", "7:30 – 10:30 · slides 8 e 9", TINTA, [
         "<b>Slide 8:</b> como medimos: <font name='DVM'>std::chrono::steady_clock</font> em volta da chamada, "
         "uma rodada de aquecimento descartada, os dois algoritmos ordenam cópias do mesmo vetor e "
-        "<font name='DVM'>std::is_sorted</font> confere o resultado.",
-        "<b>Slide 9 / demo:</b> compilar e rodar <font name='DVM'>./benchmark</font> ao vivo (leva ~2 s) e "
-        "mostrar a tabela aparecendo no terminal e o CSV gerado.",
+        "<font name='DVM'>std::is_sorted</font> confere o resultado. Vetores pequenos: k cópias, tempo dividido por k.",
+        "<b>Slide 9 / demo:</b> abrir o <font name='DVM'>PAINEL_ADM.bat</font>, escolher a opção [2] (roda em ~2 s) "
+        "e mostrar o relatório que abre no navegador.",
     ], [
-        "Garantir que o programa compila no computador da apresentação (ou levar print/vídeo de reserva).",
-        "Rodar a versão final do teste e passar os CSVs para a Pessoa 5.",
+        "Testar o <font name='DVM'>PAINEL_ADM.bat</font> no computador da apresentação e levar um print de reserva.",
+        "Rodar a versão final do teste (opções [2] e [3]) e passar a pasta resultados para a Pessoa 5.",
         "Preparar resposta para: “por que usar a mesma entrada nos dois algoritmos?”.",
     ]),
-    ("Pessoa 5 — Resultados, análise e conclusão", "10:30 – 13:30 · slides 10 a 12", TINTA, [
+    ("Pessoa 5 — Resultados, análise e conclusão", "10:30 – 13:30 · slides 10 a 13", TINTA, [
         "<b>Slide 10:</b> tabela de médias e desvios (a da página seguinte).",
         "<b>Slide 11:</b> o gráfico em escala log: as duas retas quase paralelas mostram o mesmo crescimento "
         "n log n; o Quicksort fica sempre um pouco abaixo nos tamanhos grandes.",
-        "<b>Slide 12:</b> conclusão: quando usar cada um (Quicksort quando velocidade média importa; "
-        "Mergesort quando precisa de garantia de pior caso ou estabilidade) e o que mudaríamos no teste.",
+        "<b>Slide 12:</b> outros cenários de entrada (já ordenado, invertido, muitos repetidos): o Quicksort venceu em todos.",
+        "<b>Slide 13:</b> conclusão: quando usar cada um (Quicksort quando velocidade média importa; "
+        "Mergesort quando precisa de garantia de pior caso ou estabilidade).",
     ], [
-        "Gerar o gráfico com <font name='DVM'>python3 grafico.py</font> depois do teste final.",
-        "Calcular a diferença percentual em 300.000 e a razão de crescimento entre tamanhos.",
-        "Montar o slide 13 (“Perguntas?”) e conduzir a rodada de perguntas.",
+        "Se os números mudarem no teste final, atualizar a tabela e os gráficos dos slides 10 a 12.",
+        "Treinar a explicação do crescimento: 10× mais dados → ~12× mais tempo (n log n).",
+        "Conduzir a rodada de perguntas (slide 14).",
     ]),
 ]
 for nome, quando, cor, fala, tarefas in pessoas:
@@ -162,7 +167,7 @@ H(PageBreak())
 # ---------- Pagina: resultados ----------
 H(P("Resultados já medidos (para os slides 10 e 11)", h1))
 H(P("Média e desvio padrão de 20 execuções, em milissegundos. Medido em um Intel Xeon 2,8 GHz; "
-    "rodem de novo na máquina de vocês e atualizem os números (o padrão deve se manter).", pequeno))
+    "rodem de novo na máquina de vocês (PAINEL_ADM.bat, opção [2]). Os números mudam, o padrão se mantém.", pequeno))
 H(Spacer(1, 6))
 linhas = [["n", "Mergesort (ms)", "Quicksort (ms)", "Quicksort vs. Mergesort"]]
 for n in NS:
@@ -173,7 +178,7 @@ for n in NS:
                     f"{abs(dif):.0f}% mais lento" if dif <= -3 else "empate técnico")])
 H(tabela(linhas, [2.6 * cm, 4.4 * cm, 4.4 * cm, 5.1 * cm]))
 H(Spacer(1, 10))
-H(Image("grafico.png", width=16.5 * cm, height=16.5 * cm * 4.2 / 7))
+H(Image(os.path.join(RES, "grafico.png"), width=16.5 * cm, height=16.5 * cm * 4.2 / 7))
 H(Spacer(1, 6))
 H(P("Leitura rápida: de 30.000 para 300.000 (10× mais dados) o tempo cresceu ~12×, como previsto por "
     "n log n (10 × log 300.000 / log 30.000 ≈ 12,2). Um algoritmo O(n²) cresceria 100×.", pequeno))
@@ -183,9 +188,9 @@ H(P("Checklist do grupo", h1))
 H(tabela([
     ["", "Tarefa", "Quem"],
     ["☐", "Preencher os nomes na tabela da página 1 e combinar o prazo dos slides", "Todos"],
-    ["☐", "Modelo dos slides compartilhado", "Pessoa 1"],
+    ["☐", "Nomes colocados no slide 1", "Pessoa 1"],
     ["☐", "Teste final rodado, CSVs e gráfico atualizados", "Pessoas 4 e 5"],
-    ["☐", "Slides de todos juntados em um arquivo", "Pessoa 1"],
+    ["☐", "Cada um leu as anotações do apresentador dos seus slides", "Todos"],
     ["☐", "Ensaio completo cronometrado (meta: 13:30 sem as perguntas)", "Todos"],
     ["☐", "Demo testada no computador da apresentação + plano B (print/vídeo)", "Pessoa 4"],
 ], [1.0 * cm, 12.0 * cm, 3.5 * cm]))
@@ -195,7 +200,7 @@ def rodape(c, d):
     c.drawString(2 * cm, 1.2 * cm, "Mergesort × Quicksort — divisão do trabalho")
     c.drawRightString(A4[0] - 2 * cm, 1.2 * cm, f"{d.page}"); c.restoreState()
 
-doc = SimpleDocTemplate("divisao_trabalho.pdf", pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm,
+doc = SimpleDocTemplate(os.path.join(RAIZ, "apresentacao", "divisao_trabalho.pdf"), pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm,
                         topMargin=1.8 * cm, bottomMargin=1.8 * cm, title="Divisão do trabalho — Mergesort x Quicksort")
 doc.build(historia, onFirstPage=rodape, onLaterPages=rodape)
 print("divisao_trabalho.pdf gerado")
