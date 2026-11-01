@@ -1,5 +1,5 @@
 // =============================================================================
-//  Benchmark de Ordenação — Mergesort × Quicksort
+//  Benchmark de Ordenação — Mergesort bottom-up × Quicksort (clássico e personalizado)
 //  Painel administrativo + modo linha de comando
 //
 //  No Windows, o PAINEL_ADM.bat compila e roda este arquivo sozinho.
@@ -44,7 +44,7 @@
 
 using namespace std;
 
-static const char* VERSAO = "2.0";
+static const char* VERSAO = "3.0";
 
 // =============================================================================
 //  Algoritmos
@@ -77,28 +77,62 @@ void mergesort(vector<int>& v) {
     }
 }
 
-// ---- Quicksort: pivô = mediana de três (início, meio, fim), particionamento de Hoare.
-//      Recursão só na parte menor => pilha O(log n) mesmo em entradas ruins.
-static void quicksortRec(vector<int>& v, int ini, int fim) {  // [ini, fim]
-    while (ini < fim) {
-        int meio = ini + (fim - ini) / 2;
-        int a = v[ini], b = v[meio], c = v[fim];
-        int pivo = max(min(a, b), min(max(a, b), c));
-        int i = ini - 1, j = fim + 1;
-        while (true) {
-            do i++; while (v[i] < pivo);
-            do j--; while (v[j] > pivo);
-            if (i >= j) break;
-            swap(v[i], v[j]);
-        }
-        if (j - ini < fim - j) { quicksortRec(v, ini, j); ini = j + 1; }
-        else                   { quicksortRec(v, j + 1, fim); fim = j; }
-    }
+// ---- Quicksort: particionamento clássico (dois índices que se cruzam, como visto em aula).
+//      Os dois Quicksort usam EXATAMENTE a mesma partição; só muda a escolha do pivô.
+//      Assim, qualquer diferença de tempo entre eles vem do pivô.
+typedef int (*EscolhaPivo)(const vector<int>& v, int esq, int dir);
+
+// Clássico: pivô = elemento do meio do trecho.
+static int pivoMeio(const vector<int>& v, int esq, int dir) {
+    return v[esq + (dir - esq) / 2];
 }
 
-void quicksort(vector<int>& v) {
-    if (!v.empty()) quicksortRec(v, 0, (int)v.size() - 1);
+// Personalizado: pivô = mediana de 5 posições espalhadas pelo trecho
+// (início, 1/4, meio, 3/4 e fim). Trechos com menos de 5 elementos usam o meio.
+static int pivoMediana5(const vector<int>& v, int esq, int dir) {
+    if (dir - esq + 1 < 5) return pivoMeio(v, esq, dir);
+    int d = (dir - esq) / 4;
+    int a[5] = {v[esq], v[esq + d], v[esq + 2 * d], v[esq + 3 * d], v[dir]};
+    for (int x = 1; x < 5; x++) {  // ordena as 5 amostras (inserção)
+        int t = a[x], y = x - 1;
+        while (y >= 0 && a[y] > t) { a[y + 1] = a[y]; y--; }
+        a[y + 1] = t;
+    }
+    return a[2];  // a do meio das 5
 }
+
+static void quickRec(vector<int>& v, int esq, int dir, EscolhaPivo escolher) {
+    int i = esq, j = dir;
+    int pivo = escolher(v, esq, dir);
+    while (i <= j) {
+        while (v[i] < pivo) i++;  // para em quem é >= pivô
+        while (v[j] > pivo) j--;  // para em quem é <= pivô
+        if (i <= j) { swap(v[i], v[j]); i++; j--; }
+    }
+    if (esq < j) quickRec(v, esq, j, escolher);   // lado dos menores
+    if (i < dir) quickRec(v, i, dir, escolher);   // lado dos maiores
+}
+
+void quicksortClassico(vector<int>& v) {
+    if (v.size() > 1) quickRec(v, 0, (int)v.size() - 1, pivoMeio);
+}
+
+void quicksortPersonalizado(vector<int>& v) {
+    if (v.size() > 1) quickRec(v, 0, (int)v.size() - 1, pivoMediana5);
+}
+
+// ---- Algoritmos comparados (a ordem aqui é a ordem das tabelas e gráficos)
+struct Algoritmo {
+    const char* id;    // nome no CSV
+    const char* nome;  // nome nas tabelas
+    void (*ordenar)(vector<int>&);
+};
+static const Algoritmo ALGOS[] = {
+    {"mergesort_bu", "Mergesort bottom-up", mergesort},
+    {"quick_classico", "Quicksort clássico", quicksortClassico},
+    {"quick_personalizado", "Quicksort personalizado", quicksortPersonalizado},
+};
+static const int NALG = (int)(sizeof(ALGOS) / sizeof(ALGOS[0]));
 
 // =============================================================================
 //  Configuração
@@ -249,13 +283,12 @@ static void pausar() { lerLinha("\n  Pressione ENTER para voltar ao menu..."); }
 // =============================================================================
 
 struct Resumo {
-    string algoritmo;
+    int alg;  // índice em ALGOS
     int n;
-    double media, desvio, minimo, maximo;
+    double media, mediana, desvio, variancia, cv, minimo, maximo;
 };
 
 static void gerarEntrada(vector<int>& v, const string& cenario, mt19937& rng) {
-    int n = (int)v.size();
     if (cenario == "repetidos") {
         uniform_int_distribution<int> d(0, 9);
         for (int& x : v) x = d(rng);
@@ -265,7 +298,6 @@ static void gerarEntrada(vector<int>& v, const string& cenario, mt19937& rng) {
     for (int& x : v) x = d(rng);
     if (cenario == "ordenado") sort(v.begin(), v.end());
     else if (cenario == "inverso") sort(v.begin(), v.end(), greater<int>());
-    (void)n;
 }
 
 // Vetores pequenos ordenam em microssegundos, perto da resolução do relógio.
@@ -273,8 +305,7 @@ static void gerarEntrada(vector<int>& v, const string& cenario, mt19937& rng) {
 // (k = 20.000 / n, mínimo 1). As cópias são feitas ANTES de ligar o cronômetro.
 static int repeticoes(int n) { return max(1, 20000 / max(n, 1)); }
 
-template <class F>
-static double medirMs(F ordenar, const vector<int>& original, vector<int>& saida) {
+static double medirMs(void (*ordenar)(vector<int>&), const vector<int>& original, vector<int>& saida) {
     int k = repeticoes((int)original.size());
     vector<vector<int> > copias(k, original);
     chrono::steady_clock::time_point t0 = chrono::steady_clock::now();
@@ -284,19 +315,48 @@ static double medirMs(F ordenar, const vector<int>& original, vector<int>& saida
     return chrono::duration<double, milli>(t1 - t0).count() / k;
 }
 
-static Resumo resumir(const string& nome, int n, const vector<double>& t) {
+// Estatística descritiva das amostras (desvio e variância amostrais, divisor n-1).
+static Resumo resumir(int alg, int n, vector<double> t) {
     Resumo r;
-    r.algoritmo = nome;
+    r.alg = alg;
     r.n = n;
     double soma = 0;
     for (double x : t) soma += x;
     r.media = soma / t.size();
-    double var = 0;
-    for (double x : t) var += (x - r.media) * (x - r.media);
-    r.desvio = t.size() > 1 ? sqrt(var / (t.size() - 1)) : 0.0;
-    r.minimo = *min_element(t.begin(), t.end());
-    r.maximo = *max_element(t.begin(), t.end());
+    double sq = 0;
+    for (double x : t) sq += (x - r.media) * (x - r.media);
+    r.variancia = t.size() > 1 ? sq / (t.size() - 1) : 0.0;
+    r.desvio = sqrt(r.variancia);
+    r.cv = r.media > 0 ? r.desvio / r.media * 100.0 : 0.0;
+    sort(t.begin(), t.end());
+    size_t m = t.size();
+    r.mediana = m % 2 ? t[m / 2] : (t[m / 2 - 1] + t[m / 2]) / 2.0;
+    r.minimo = t.front();
+    r.maximo = t.back();
     return r;
+}
+
+// ---- Formatação (vírgula decimal, 3 algarismos significativos em valores pequenos)
+static string virgula(string s) {
+    for (char& c : s) if (c == '.') c = ',';
+    return s;
+}
+static string fmt(double v, int casas) {
+    char b[64];
+    snprintf(b, sizeof b, "%.*f", casas, v);
+    return virgula(b);
+}
+static string fmtMs(double v) {
+    if (v <= 0) return "0";
+    int casas = max(2, 2 - (int)floor(log10(v)));
+    return fmt(v, min(casas, 8));
+}
+static string fmtVar(double v) {  // variância (ms²): notação científica quando é muito pequena
+    if (v <= 0) return "0";
+    if (v >= 0.01) return fmtMs(v);
+    char b[64];
+    snprintf(b, sizeof b, "%.2e", v);
+    return virgula(b);
 }
 
 static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, double totalSeg, const string& caminho);
@@ -312,18 +372,18 @@ static int executar(const Config& cfg, bool verboso) {
         return 2;
     }
     bruto << "algoritmo,n,execucao,tempo_ms\n";
-    resumo << "algoritmo,n,media_ms,desvio_ms,min_ms,max_ms\n";
+    resumo << "algoritmo,n,media_ms,mediana_ms,desvio_ms,variancia_ms2,cv_pct,min_ms,max_ms\n";
 
-    int total = (int)cfg.tamanhos.size() * cfg.execucoes * 2;
+    int total = (int)cfg.tamanhos.size() * cfg.execucoes * NALG;
     if (verboso) {
-        cout << "\n  Executando " << milhar(total) << " ordenações  (cenário: " << cfg.cenario
+        cout << "\n  Executando " << milhar(total) << " ordenações  (" << NALG << " algoritmos, cenário: " << cfg.cenario
              << ", semente: " << cfg.semente << ")\n\n";
     }
 
     mt19937 rng(cfg.semente);
-    vector<Resumo> resultados;
+    vector<Resumo> resultados;  // por tamanho, na ordem de ALGOS
     chrono::steady_clock::time_point inicio = chrono::steady_clock::now();
-    char buf[256];
+    char buf[512];
 
     for (size_t k = 0; k < cfg.tamanhos.size(); k++) {
         int n = cfg.tamanhos[k];
@@ -331,39 +391,35 @@ static int executar(const Config& cfg, bool verboso) {
             snprintf(buf, sizeof buf, "  [%d/%d] n = %-11s ", (int)k + 1, (int)cfg.tamanhos.size(), milhar(n).c_str());
             cout << buf << flush;
         }
-        // aquecimento descartado (cache frio, alocação inicial)
-        {
+        {   // aquecimento descartado (cache frio, alocação inicial)
             vector<int> w(n);
             gerarEntrada(w, cfg.cenario, rng);
-            vector<int> w2 = w;
-            mergesort(w);
-            quicksort(w2);
+            for (int a = 0; a < NALG; a++) { vector<int> c = w; ALGOS[a].ordenar(c); }
         }
-        vector<double> tm, tq;
+        vector<vector<double> > tempos(NALG);
         chrono::steady_clock::time_point t0 = chrono::steady_clock::now();
         for (int e = 1; e <= cfg.execucoes; e++) {
             vector<int> original(n);
-            gerarEntrada(original, cfg.cenario, rng);
-            vector<int> a, b;  // os dois ordenam cópias da MESMA entrada
-            double ms_m = medirMs(mergesort, original, a);
-            double ms_q = medirMs(quicksort, original, b);
-            if (!is_sorted(a.begin(), a.end()) || !is_sorted(b.begin(), b.end())) {
-                cerr << "\n  ERRO: resultado não ordenado (n=" << n << ", execução " << e << ")\n";
-                return 3;
+            gerarEntrada(original, cfg.cenario, rng);  // a MESMA entrada para todos os algoritmos
+            for (int a = 0; a < NALG; a++) {
+                vector<int> saida;
+                double ms = medirMs(ALGOS[a].ordenar, original, saida);
+                if (!is_sorted(saida.begin(), saida.end())) {
+                    cerr << "\n  ERRO: " << ALGOS[a].nome << " não ordenou (n=" << n << ", execução " << e << ")\n";
+                    return 3;
+                }
+                tempos[a].push_back(ms);
+                snprintf(buf, sizeof buf, "%s,%d,%d,%.6f\n", ALGOS[a].id, n, e, ms);
+                bruto << buf;
             }
-            tm.push_back(ms_m);
-            tq.push_back(ms_q);
-            snprintf(buf, sizeof buf, "mergesort,%d,%d,%.6f\nquicksort,%d,%d,%.6f\n", n, e, ms_m, n, e, ms_q);
-            bruto << buf;
             if (verboso && (cfg.execucoes <= 40 || e % (cfg.execucoes / 40 + 1) == 0)) cout << "#" << flush;
         }
         double seg = chrono::duration<double>(chrono::steady_clock::now() - t0).count();
-        Resumo rm = resumir("mergesort", n, tm), rq = resumir("quicksort", n, tq);
-        resultados.push_back(rm);
-        resultados.push_back(rq);
-        for (const Resumo* r : {&rm, &rq}) {
-            snprintf(buf, sizeof buf, "%s,%d,%.6f,%.6f,%.6f,%.6f\n", r->algoritmo.c_str(), n, r->media, r->desvio,
-                     r->minimo, r->maximo);
+        for (int a = 0; a < NALG; a++) {
+            Resumo r = resumir(a, n, tempos[a]);
+            resultados.push_back(r);
+            snprintf(buf, sizeof buf, "%s,%d,%.6f,%.6f,%.6f,%.6e,%.4f,%.6f,%.6f\n", ALGOS[a].id, n, r.media, r.mediana,
+                     r.desvio, r.variancia, r.cv, r.minimo, r.maximo);
             resumo << buf;
         }
         if (verboso) {
@@ -375,34 +431,28 @@ static int executar(const Config& cfg, bool verboso) {
     resumo.close();
     double totalSeg = chrono::duration<double>(chrono::steady_clock::now() - inicio).count();
 
-    string pHtml = cfg.saida + "/relatorio.html";
-    escreverRelatorioHtml(cfg, resultados, totalSeg, pHtml);
+    escreverRelatorioHtml(cfg, resultados, totalSeg, cfg.saida + "/relatorio.html");
 
     ofstream log((cfg.saida + "/historico.log").c_str(), ios::app);
     snprintf(buf, sizeof buf, " | tempo total %.2f s | OK\n", totalSeg);
     log << agora() << " | tamanhos=" << listaTamanhos(cfg.tamanhos) << " | execucoes=" << cfg.execucoes
         << " | semente=" << cfg.semente << " | cenario=" << cfg.cenario << buf;
 
-    // Tabela final
-    cout << "\n  " << string(66, '-') << "\n";
-    snprintf(buf, sizeof buf, "  %-11s %14s %14s    %s\n", "n", "Mergesort (ms)", "Quicksort (ms)", "Quicksort vs Mergesort");
-    cout << buf << "  " << string(66, '-') << "\n";
-    for (size_t i = 0; i + 1 < resultados.size(); i += 2) {
-        const Resumo& m = resultados[i];
-        const Resumo& q = resultados[i + 1];
-        double dif = (m.media - q.media) / m.media * 100.0;
-        string comp;
-        if (fabs(dif) < 3) comp = "empate técnico";
-        else {
-            snprintf(buf, sizeof buf, "%.0f%% mais %s", fabs(dif), dif > 0 ? "rápido" : "lento");
-            comp = buf;
-        }
-        snprintf(buf, sizeof buf, "  %-11s %14.4f %14.4f    ", milhar(m.n).c_str(), m.media, q.media);
-        cout << buf << comp << "\n";
+    // Tabela final: média de cada algoritmo e o mais rápido
+    cout << "\n  Tempo médio (ms)\n";
+    snprintf(buf, sizeof buf, "  %-10s %12s %12s %12s   %s\n", "n", "Merge BU", "Quick cláss.", "Quick pers.", "Mais rápido");
+    cout << buf << "  " << string(70, '-') << "\n";
+    for (size_t i = 0; i + NALG <= resultados.size(); i += NALG) {
+        int melhor = 0;
+        for (int a = 1; a < NALG; a++) if (resultados[i + a].media < resultados[i + melhor].media) melhor = a;
+        snprintf(buf, sizeof buf, "  %-10s %12s %12s %12s   %s\n", milhar(resultados[i].n).c_str(),
+                 fmtMs(resultados[i].media).c_str(), fmtMs(resultados[i + 1].media).c_str(),
+                 fmtMs(resultados[i + 2].media).c_str(), ALGOS[melhor].nome);
+        cout << buf;
     }
-    cout << "  " << string(66, '-') << "\n";
+    cout << "  " << string(70, '-') << "\n";
     snprintf(buf, sizeof buf, "  Tempo total: %.2f s  |  arquivos salvos em: %s/\n", totalSeg, cfg.saida.c_str());
-    cout << buf;
+    cout << buf << "  Estatística completa por tamanho: opção [7] do painel ou --tabela\n";
     return 0;
 }
 
@@ -410,22 +460,11 @@ static int executar(const Config& cfg, bool verboso) {
 //  Relatório HTML (sem dependências: tabela + gráfico SVG em escala log-log)
 // =============================================================================
 
-static string fmt(double v, int casas) {
-    char b[64];
-    snprintf(b, sizeof b, "%.*f", casas, v);
-    string s = b;
-    for (char& c : s) if (c == '.') c = ',';
-    return s;
-}
-
-static string fmtMs(double v) { return v < 1 ? fmt(v, 4) : fmt(v, 2); }
-
 static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, double totalSeg, const string& caminho) {
     ofstream h(caminho.c_str());
     if (!h) return;
 
-    // --- geometria do gráfico
-    const double W = 760, H = 380, L = 70, R = 110, T = 20, B = 50;
+    const double W = 760, H = 380, L = 70, R = 30, T = 20, B = 50;
     double xmin = 1e18, xmax = 0, ymin = 1e18, ymax = 0;
     for (const Resumo& r : res) {
         xmin = min(xmin, (double)r.n); xmax = max(xmax, (double)r.n);
@@ -454,62 +493,58 @@ static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, 
     }
     svg << "<text class='eixo' x='" << (L + W - R) / 2 << "' y='" << H - 8 << "' text-anchor='middle'>tamanho do vetor (n), escala log</text>";
     svg << "<text class='eixo' transform='translate(16 " << (T + H - B) / 2 << ") rotate(-90)' text-anchor='middle'>tempo médio (ms), escala log</text>";
-    const char* nomes[] = {"mergesort", "quicksort"};
-    const char* rotulos[] = {"Mergesort bottom-up", "Quicksort"};
-    for (int a = 0; a < 2; a++) {
+    for (int a = 0; a < NALG; a++) {
         stringstream pts;
-        double ux = 0, uy = 0, um = 0;
-        for (const Resumo& r : res) if (r.algoritmo == nomes[a]) {
-            ux = px(r.n); uy = py(r.media); um = r.media;
-            pts << ux << "," << uy << " ";
-        }
+        for (const Resumo& r : res) if (r.alg == a) pts << px(r.n) << "," << py(r.media) << " ";
         svg << "<polyline class='s" << a << "' fill='none' stroke-width='2.5' points='" << pts.str() << "'/>";
-        for (const Resumo& r : res) if (r.algoritmo == nomes[a]) {
+        for (const Resumo& r : res) if (r.alg == a) {
             svg << "<circle class='p" << a << "' r='5' cx='" << px(r.n) << "' cy='" << py(r.media) << "'><title>"
-                << rotulos[a] << " — n = " << milhar(r.n) << ": " << fmtMs(r.media) << " ms (± " << fmtMs(r.desvio)
+                << ALGOS[a].nome << " — n = " << milhar(r.n) << ": " << fmtMs(r.media) << " ms (± " << fmtMs(r.desvio)
                 << ")</title></circle>";
         }
-        svg << "<text class='rotulo' x='" << ux + 10 << "' y='" << uy + (a == 0 ? -4 : 12) << "'>" << rotulos[a]
-            << " " << fmtMs(um) << " ms</text>";
     }
     svg << "</svg>";
 
     h << "<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>"
-      << "<title>Relatório — Mergesort × Quicksort</title><style>"
-      << ":root{--fundo:#fcfcfb;--cartao:#fff;--tinta:#0b0b0b;--suave:#52514e;--linha:#e3e2de;--s0:#2a78d6;--s1:#eb6834}"
-      << "@media(prefers-color-scheme:dark){:root{--fundo:#1a1a19;--cartao:#232322;--tinta:#f0efec;--suave:#c3c2b7;--linha:#3a3a37;--s0:#3987e5;--s1:#d95926}}"
+      << "<title>Relatório — algoritmos de ordenação</title><style>"
+      << ":root{--fundo:#fcfcfb;--cartao:#fff;--tinta:#0b0b0b;--suave:#52514e;--linha:#e3e2de;--s0:#2a78d6;--s1:#eb6834;--s2:#1baf7a}"
+      << "@media(prefers-color-scheme:dark){:root{--fundo:#1a1a19;--cartao:#232322;--tinta:#f0efec;--suave:#c3c2b7;--linha:#3a3a37;--s0:#3987e5;--s1:#d95926;--s2:#199e70}}"
       << "*{box-sizing:border-box}body{margin:0;background:var(--fundo);color:var(--tinta);font:15px/1.5 system-ui,Segoe UI,Arial,sans-serif}"
-      << "main{max-width:880px;margin:0 auto;padding:28px 16px 48px}h1{font-size:26px;margin:0 0 4px}h2{font-size:17px;margin:28px 0 10px}"
+      << "main{max-width:960px;margin:0 auto;padding:28px 16px 48px}h1{font-size:26px;margin:0 0 4px}h2{font-size:17px;margin:28px 0 10px}"
       << ".sub{color:var(--suave);margin:0 0 20px}.cartao{background:var(--cartao);border:1px solid var(--linha);border-radius:10px;padding:16px}"
       << ".meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.meta div{font-size:13px;color:var(--suave)}"
       << ".meta b{display:block;font-size:17px;color:var(--tinta)}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}"
-      << "th,td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--linha)}th:first-child,td:first-child{text-align:left}"
-      << "th{font-size:13px;color:var(--suave);font-weight:600}.leg{display:flex;gap:18px;font-size:13px;color:var(--suave);margin-bottom:6px}"
+      << "th,td{text-align:right;padding:7px 9px;border-bottom:1px solid var(--linha)}th:first-child,td:first-child{text-align:left}"
+      << "th{font-size:13px;color:var(--suave);font-weight:600}caption{text-align:left;font-weight:600;padding:0 0 8px}"
+      << ".leg{display:flex;flex-wrap:wrap;gap:18px;font-size:13px;color:var(--suave);margin-bottom:6px}"
       << ".leg i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}"
-      << "svg{width:100%;height:auto}.grade{stroke:var(--linha)}.eixo{fill:var(--suave);font-size:12px}.rotulo{fill:var(--tinta);font-size:12px}"
-      << ".s0{stroke:var(--s0)}.s1{stroke:var(--s1)}.p0{fill:var(--s0)}.p1{fill:var(--s1)}circle{stroke:var(--cartao);stroke-width:2}"
-      << ".tabela{overflow-x:auto}footer{color:var(--suave);font-size:12px;margin-top:28px}</style></head><body><main>"
-      << "<h1>Mergesort bottom-up × Quicksort</h1><p class='sub'>Relatório gerado em " << agora() << "</p>"
-      << "<div class='cartao meta'>"
-      << "<div><b>" << milhar((long long)cfg.tamanhos.size() * cfg.execucoes * 2) << "</b>ordenações</div>"
+      << "svg{width:100%;height:auto}.grade{stroke:var(--linha)}.eixo{fill:var(--suave);font-size:12px}"
+      << ".s0{stroke:var(--s0)}.s1{stroke:var(--s1)}.s2{stroke:var(--s2)}.p0{fill:var(--s0)}.p1{fill:var(--s1)}.p2{fill:var(--s2)}"
+      << "circle{stroke:var(--cartao);stroke-width:2}.tabela{overflow-x:auto;margin-bottom:14px}footer{color:var(--suave);font-size:12px;margin-top:28px}</style></head><body><main>"
+      << "<h1>Algoritmos de ordenação</h1><p class='sub'>Mergesort bottom-up × Quicksort clássico × Quicksort personalizado · gerado em "
+      << agora() << "</p><div class='cartao meta'>"
+      << "<div><b>" << milhar((long long)cfg.tamanhos.size() * cfg.execucoes * NALG) << "</b>ordenações</div>"
       << "<div><b>" << cfg.execucoes << "</b>execuções por tamanho</div>"
       << "<div><b>" << cfg.cenario << "</b>cenário de entrada</div>"
       << "<div><b>" << cfg.semente << "</b>semente</div>"
       << "<div><b>" << fmt(totalSeg, 2) << " s</b>tempo total</div></div>"
-      << "<h2>Tempo médio por tamanho</h2><div class='cartao'><div class='leg'><span><i style='background:var(--s0)'></i>Mergesort bottom-up</span>"
-      << "<span><i style='background:var(--s1)'></i>Quicksort</span></div>" << svg.str() << "</div>"
-      << "<h2>Tabela</h2><div class='cartao tabela'><table><thead><tr><th>n</th><th>Mergesort média (ms)</th><th>desvio</th>"
-      << "<th>Quicksort média (ms)</th><th>desvio</th><th>Quicksort vs Mergesort</th></tr></thead><tbody>";
-    for (size_t i = 0; i + 1 < res.size(); i += 2) {
-        const Resumo& m = res[i];
-        const Resumo& q = res[i + 1];
-        double dif = (m.media - q.media) / m.media * 100.0;
-        string comp = fabs(dif) < 3 ? "empate técnico" : fmt(fabs(dif), 0) + "% mais " + (dif > 0 ? "rápido" : "lento");
-        h << "<tr><td>" << milhar(m.n) << "</td><td>" << fmtMs(m.media) << "</td><td>± " << fmtMs(m.desvio) << "</td><td>"
-          << fmtMs(q.media) << "</td><td>± " << fmtMs(q.desvio) << "</td><td>" << comp << "</td></tr>";
+      << "<h2>Tempo médio por tamanho</h2><div class='cartao'><div class='leg'>";
+    for (int a = 0; a < NALG; a++) h << "<span><i style='background:var(--s" << a << ")'></i>" << ALGOS[a].nome << "</span>";
+    h << "</div>" << svg.str() << "</div><h2>Estatística descritiva (ms)</h2>";
+    for (size_t i = 0; i + NALG <= res.size(); i += NALG) {
+        h << "<div class='cartao tabela'><table><caption>Conjunto de " << milhar(res[i].n) << " dados</caption><thead><tr>"
+          << "<th>Algoritmo</th><th>Média</th><th>Mediana</th><th>Desvio padrão</th><th>Variância (ms²)</th>"
+          << "<th>CV (%)</th><th>Máximo / Mínimo</th></tr></thead><tbody>";
+        for (int a = 0; a < NALG; a++) {
+            const Resumo& r = res[i + a];
+            h << "<tr><td>" << ALGOS[a].nome << "</td><td>" << fmtMs(r.media) << "</td><td>" << fmtMs(r.mediana) << "</td><td>"
+              << fmtMs(r.desvio) << "</td><td>" << fmtVar(r.variancia) << "</td><td>" << fmt(r.cv, 1) << "</td><td>"
+              << fmtMs(r.maximo) << " / " << fmtMs(r.minimo) << "</td></tr>";
+        }
+        h << "</tbody></table></div>";
     }
-    h << "</tbody></table></div><footer>Sistema: " << sistema() << " · Compilador: " << compilador()
-      << " · Benchmark v" << VERSAO << " · Dados brutos em resultados_brutos.csv</footer></main></body></html>\n";
+    h << "<footer>Sistema: " << sistema() << " · Compilador: " << compilador() << " · Benchmark v" << VERSAO
+      << " · Dados brutos em resultados_brutos.csv</footer></main></body></html>\n";
 }
 
 // =============================================================================
@@ -519,7 +554,7 @@ static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, 
 static void cabecalho(const Config& c) {
     limparTela();
     cout << "  ==================================================================\n"
-         << "     BENCHMARK DE ORDENAÇÃO  ·  Mergesort bottom-up × Quicksort  ·  v" << VERSAO << "\n"
+         << "     BENCHMARK DE ORDENAÇÃO  ·  Merge bottom-up × Quick clássico × Quick personalizado  ·  v" << VERSAO << "\n"
          << "     Painel administrativo\n"
          << "  ==================================================================\n\n"
          << "  Configuração atual\n"
@@ -538,7 +573,7 @@ static void mostrarArquivo(const string& caminho, const string& vazio) {
     while (getline(f, linha)) cout << "  " << linha << "\n";
 }
 
-// ---- Tabelas detalhadas (lidas de resultados_resumo.csv)
+// ---- Tabelas detalhadas (lidas de resultados_resumo.csv), no formato pedido no trabalho
 static size_t larguraTela(const string& s) {  // conta caracteres, não bytes (UTF-8)
     size_t n = 0;
     for (unsigned char c : s) if ((c & 0xC0) != 0x80) n++;
@@ -566,7 +601,7 @@ static void imprimirTabela(const string& titulo, const vector<string>& cab, cons
     cout << sep << "\n";
 }
 
-static bool lerResumoCsv(const string& pasta, vector<Resumo>& m, vector<Resumo>& q) {
+static bool lerResumoCsv(const string& pasta, vector<Resumo>& res) {
     ifstream f((pasta + "/resultados_resumo.csv").c_str());
     if (!f) return false;
     string linha;
@@ -577,51 +612,53 @@ static bool lerResumoCsv(const string& pasta, vector<Resumo>& m, vector<Resumo>&
         string campo;
         vector<string> c;
         while (getline(ss, campo, ',')) c.push_back(campo);
-        if (c.size() < 6) continue;
+        if (c.size() < 9) continue;
         Resumo r;
-        r.algoritmo = c[0];
+        r.alg = -1;
+        for (int a = 0; a < NALG; a++) if (c[0] == ALGOS[a].id) r.alg = a;
+        if (r.alg < 0) continue;
         r.n = atoi(c[1].c_str());
-        r.media = atof(c[2].c_str()); r.desvio = atof(c[3].c_str());
-        r.minimo = atof(c[4].c_str()); r.maximo = atof(c[5].c_str());
-        (r.algoritmo == "mergesort" ? m : q).push_back(r);
+        r.media = atof(c[2].c_str()); r.mediana = atof(c[3].c_str()); r.desvio = atof(c[4].c_str());
+        r.variancia = atof(c[5].c_str()); r.cv = atof(c[6].c_str());
+        r.minimo = atof(c[7].c_str()); r.maximo = atof(c[8].c_str());
+        res.push_back(r);
     }
-    return !m.empty() && m.size() == q.size();
+    return !res.empty() && res.size() % NALG == 0;
 }
 
-static string fmtMs(double v);
-static string fmt(double v, int casas);
-
 static int mostrarTabelas(const string& pasta) {
-    vector<Resumo> m, q;
-    if (!lerResumoCsv(pasta, m, q)) {
-        cout << "\n  Nenhum resultado em \"" << pasta << "\". Rode o benchmark primeiro.\n";
+    vector<Resumo> res;
+    if (!lerResumoCsv(pasta, res)) {
+        cout << "\n  Nenhum resultado em \"" << pasta << "\" (ou resultados de uma versão antiga). Rode o benchmark primeiro.\n";
         return 1;
     }
-    cout << "\n  RESULTADOS DETALHADOS  (pasta: " << pasta << ", tempos em milissegundos)\n";
-    const char* nomes[] = {"1) Mergesort bottom-up", "2) Quicksort"};
-    for (int a = 0; a < 2; a++) {
-        const vector<Resumo>& v = a == 0 ? m : q;
+    cout << "\n  ESTATÍSTICA DESCRITIVA  (pasta: " << pasta << ", tempos em milissegundos)\n";
+    int num = 1;
+    for (size_t i = 0; i + NALG <= res.size(); i += NALG, num++) {
         vector<vector<string> > l;
-        for (const Resumo& r : v) l.push_back({milhar(r.n), fmtMs(r.media), fmtMs(r.desvio), fmtMs(r.minimo), fmtMs(r.maximo)});
-        imprimirTabela(nomes[a], {"Itens (n)", "Média", "Desvio", "Mínimo", "Máximo"}, l);
+        for (int a = 0; a < NALG; a++) {
+            const Resumo& r = res[i + a];
+            l.push_back({ALGOS[r.alg].nome, fmtMs(r.media), fmtMs(r.mediana), fmtMs(r.desvio), fmtVar(r.variancia),
+                         fmt(r.cv, 1), fmtMs(r.maximo) + " / " + fmtMs(r.minimo)});
+        }
+        imprimirTabela("Tabela " + to_string(num) + ". Estatística descritiva com o conjunto de " + milhar(res[i].n) + " dados.",
+                       {"Algoritmo", "Média", "Mediana", "Desvio", "Variância (ms²)", "CV (%)", "Máx / Mín"}, l);
     }
-    vector<vector<string> > comp, cres;
-    for (size_t i = 0; i < m.size(); i++) {
-        double dif = (m[i].media - q[i].media) / m[i].media * 100.0;
-        string venc = fabs(dif) < 3 ? "empate" : dif > 0 ? "Quicksort" : "Mergesort";
-        comp.push_back({milhar(m[i].n), fmtMs(m[i].media), fmtMs(q[i].media), fmt(fabs(dif), 0) + "%", venc});
-        string xm = i ? fmt(m[i].media / m[i - 1].media, 1) + "x" : "-";
-        string xq = i ? fmt(q[i].media / q[i - 1].media, 1) + "x" : "-";
-        string xn = i ? fmt((double)m[i].n / m[i - 1].n, 0) + "x" : "-";
-        auto nlogn = [](int n) { return n * log2((double)max(2, n)); };
-        string xp = i ? fmt(nlogn(m[i].n) / nlogn(m[i - 1].n), 1) + "x" : "-";  // previsto pela teoria
-        cres.push_back({milhar(m[i].n), xn, xp, xm, xq});
+    vector<vector<string> > cres;
+    auto nlogn = [](int n) { return n * log2((double)max(2, n)); };
+    for (size_t i = 0; i + NALG <= res.size(); i += NALG) {
+        vector<string> l = {milhar(res[i].n)};
+        if (i == 0) { for (int a = 0; a <= NALG; a++) l.push_back("-"); }
+        else {
+            l.push_back(fmt(nlogn(res[i].n) / nlogn(res[i - NALG].n), 1) + "x");
+            for (int a = 0; a < NALG; a++) l.push_back(fmt(res[i + a].media / res[i - NALG + a].media, 1) + "x");
+        }
+        cres.push_back(l);
     }
-    imprimirTabela("3) Comparação", {"Itens (n)", "Merge", "Quick", "Diferença", "Mais rápido"}, comp);
-    imprimirTabela("4) Crescimento em relação à linha anterior", {"Itens (n)", "Dados", "Previsto", "Merge", "Quick"}, cres);
-    cout << "\n  Leitura: \"Previsto\" é quanto o tempo deveria crescer por n log n. Merge e Quick\n"
-         << "  perto do previsto = comportamento n log n. Um algoritmo n² cresceria 100x.\n"
-         << "  Abaixo de 3.000 itens os tempos são de microssegundos e variam a cada rodada.\n";
+    imprimirTabela("Tabela " + to_string(num) + ". Crescimento do tempo médio em relação ao tamanho anterior.",
+                   {"Itens (n)", "Previsto n log n", "Merge BU", "Quick cláss.", "Quick pers."}, cres);
+    cout << "\n  Leitura: CV (coeficiente de variação) = desvio / média. Abaixo de 3.000 itens os tempos são\n"
+         << "  de microssegundos e variam mais. \"Previsto\" é o crescimento esperado por n log n.\n";
     return 0;
 }
 
@@ -634,7 +671,7 @@ static void menu(Config cfg) {
              << "  [4] Alterar semente aleatória\n"
              << "  [5] Alterar cenário de entrada\n"
              << "  [6] Restaurar configuração padrão do trabalho\n"
-             << "  [7] Ver resultados em tabelas detalhadas\n"
+             << "  [7] Ver estatística descritiva (tabelas detalhadas)\n"
              << "  [8] Abrir relatório no navegador\n"
              << "  [9] Ver histórico de execuções\n"
              << "  [0] Sair\n\n";
@@ -702,7 +739,7 @@ static void menu(Config cfg) {
 // =============================================================================
 
 static void ajuda() {
-    cout << "Benchmark de Ordenação — Mergesort × Quicksort v" << VERSAO << "\n\n"
+    cout << "Benchmark de Ordenação — Mergesort bottom-up × Quicksort clássico × Quicksort personalizado v" << VERSAO << "\n\n"
          << "Uso:\n"
          << "  benchmark                    abre o painel administrativo\n"
          << "  benchmark --rodar [opções]   executa sem menu\n\n"
@@ -713,7 +750,7 @@ static void ajuda() {
          << "  --cenario NOME      aleatorio | ordenado | inverso | repetidos\n"
          << "  --saida PASTA       pasta dos resultados      (padrão: resultados)\n"
          << "  --abrir             abre o relatório no navegador ao terminar\n"
-         << "  --tabela            mostra os resultados da pasta em tabelas detalhadas\n"
+         << "  --tabela            mostra a estatística descritiva da pasta em tabelas\n"
          << "  --ajuda             mostra esta mensagem\n"
          << "  --versao            mostra a versão\n\n"
          << "Códigos de saída: 0 ok, 1 argumento inválido, 2 erro de escrita, 3 falha na verificação.\n";
