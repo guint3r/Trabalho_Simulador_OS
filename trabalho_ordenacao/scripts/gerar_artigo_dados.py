@@ -24,7 +24,7 @@ CORES = {"mergesort": "#2a78d6", "quicksort": "#eb6834"}
 CENARIOS = [("aleatorio", "Aleatória"), ("ordenado", "Já ordenada"), ("inverso", "Invertida"), ("repetidos", "Muitos repetidos")]
 
 plt.rcParams.update({
-    "font.family": "serif", "font.serif": ["Liberation Serif", "Times New Roman", "DejaVu Serif"],
+    "font.family": "serif", "font.serif": ["Times New Roman", "Liberation Serif", "DejaVu Serif"],
     "font.size": 10, "axes.edgecolor": "#8a8f98", "axes.labelcolor": "#222222", "xtick.color": "#333333",
     "ytick.color": "#333333", "axes.spines.top": False, "axes.spines.right": False,
 })
