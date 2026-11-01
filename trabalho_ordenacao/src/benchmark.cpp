@@ -1,5 +1,5 @@
 // =============================================================================
-//  Benchmark de Ordenação — Mergesort bottom-up × Quicksort (clássico e personalizado)
+//  Benchmark de Ordenação — Mergesort bottom-up × Quicksort clássico
 //  Painel administrativo + modo linha de comando
 //
 //  No Windows, o PAINEL_ADM.bat compila e roda este arquivo sozinho.
@@ -14,7 +14,7 @@
 //
 //  Saídas (pasta "resultados" por padrão):
 //    resultados_brutos.csv   todas as medições individuais
-//    resultados_resumo.csv   média, desvio, mínimo e máximo por algoritmo/tamanho
+//    resultados_resumo.csv   média, mediana, desvio, variância, CV, mínimo e máximo
 //    relatorio.html          relatório com tabela e gráfico (abre no navegador)
 //    historico.log           uma linha por execução do benchmark
 // =============================================================================
@@ -77,48 +77,24 @@ void mergesort(vector<int>& v) {
     }
 }
 
-// ---- Quicksort: particionamento clássico (dois índices que se cruzam, como visto em aula).
-//      Os dois Quicksort usam EXATAMENTE a mesma partição; só muda a escolha do pivô.
-//      Assim, qualquer diferença de tempo entre eles vem do pivô.
-typedef int (*EscolhaPivo)(const vector<int>& v, int esq, int dir);
-
-// Clássico: pivô = elemento do meio do trecho.
-static int pivoMeio(const vector<int>& v, int esq, int dir) {
-    return v[esq + (dir - esq) / 2];
-}
-
-// Personalizado: pivô = mediana de 5 posições espalhadas pelo trecho
-// (início, 1/4, meio, 3/4 e fim). Trechos com menos de 5 elementos usam o meio.
-static int pivoMediana5(const vector<int>& v, int esq, int dir) {
-    if (dir - esq + 1 < 5) return pivoMeio(v, esq, dir);
-    int d = (dir - esq) / 4;
-    int a[5] = {v[esq], v[esq + d], v[esq + 2 * d], v[esq + 3 * d], v[dir]};
-    for (int x = 1; x < 5; x++) {  // ordena as 5 amostras (inserção)
-        int t = a[x], y = x - 1;
-        while (y >= 0 && a[y] > t) { a[y + 1] = a[y]; y--; }
-        a[y + 1] = t;
-    }
-    return a[2];  // a do meio das 5
-}
-
-static void quickRec(vector<int>& v, int esq, int dir, EscolhaPivo escolher) {
+// ---- Quicksort CLÁSSICO (como visto em aula): pivô = elemento do meio do trecho.
+//      Dois índices andam um em direção ao outro: i para em quem é >= pivô,
+//      j para em quem é <= pivô, e os dois são trocados. Quando se cruzam,
+//      o trecho está dividido em "menores" (esq..j) e "maiores" (i..dir).
+static void quickRec(vector<int>& v, int esq, int dir) {
     int i = esq, j = dir;
-    int pivo = escolher(v, esq, dir);
+    int pivo = v[esq + (dir - esq) / 2];
     while (i <= j) {
-        while (v[i] < pivo) i++;  // para em quem é >= pivô
-        while (v[j] > pivo) j--;  // para em quem é <= pivô
+        while (v[i] < pivo) i++;
+        while (v[j] > pivo) j--;
         if (i <= j) { swap(v[i], v[j]); i++; j--; }
     }
-    if (esq < j) quickRec(v, esq, j, escolher);   // lado dos menores
-    if (i < dir) quickRec(v, i, dir, escolher);   // lado dos maiores
+    if (esq < j) quickRec(v, esq, j);  // ordena o lado dos menores
+    if (i < dir) quickRec(v, i, dir);  // ordena o lado dos maiores
 }
 
-void quicksortClassico(vector<int>& v) {
-    if (v.size() > 1) quickRec(v, 0, (int)v.size() - 1, pivoMeio);
-}
-
-void quicksortPersonalizado(vector<int>& v) {
-    if (v.size() > 1) quickRec(v, 0, (int)v.size() - 1, pivoMediana5);
+void quicksort(vector<int>& v) {
+    if (v.size() > 1) quickRec(v, 0, (int)v.size() - 1);
 }
 
 // ---- Algoritmos comparados (a ordem aqui é a ordem das tabelas e gráficos)
@@ -128,9 +104,8 @@ struct Algoritmo {
     void (*ordenar)(vector<int>&);
 };
 static const Algoritmo ALGOS[] = {
-    {"mergesort_bu", "Mergesort bottom-up", mergesort},
-    {"quick_classico", "Quicksort clássico", quicksortClassico},
-    {"quick_personalizado", "Quicksort personalizado", quicksortPersonalizado},
+    {"mergesort", "Mergesort bottom-up", mergesort},
+    {"quicksort", "Quicksort clássico", quicksort},
 };
 static const int NALG = (int)(sizeof(ALGOS) / sizeof(ALGOS[0]));
 
@@ -301,18 +276,20 @@ static void gerarEntrada(vector<int>& v, const string& cenario, mt19937& rng) {
 }
 
 // Vetores pequenos ordenam em microssegundos, perto da resolução do relógio.
-// Por isso cada medição ordena k cópias idênticas e divide o tempo por k
-// (k = 20.000 / n, mínimo 1). As cópias são feitas ANTES de ligar o cronômetro.
+// Por isso cada amostra ordena k vetores aleatórios DIFERENTES (k = 20.000 / n,
+// mínimo 1) e divide o tempo por k. Vetores diferentes evitam que o processador
+// "decore" o caminho de uma entrada repetida. As cópias são feitas ANTES de
+// ligar o cronômetro, e os dois algoritmos recebem exatamente os mesmos vetores.
 static int repeticoes(int n) { return max(1, 20000 / max(n, 1)); }
 
-static double medirMs(void (*ordenar)(vector<int>&), const vector<int>& original, vector<int>& saida) {
-    int k = repeticoes((int)original.size());
-    vector<vector<int> > copias(k, original);
+static double medirMs(void (*ordenar)(vector<int>&), const vector<vector<int> >& entradas, bool& ok) {
+    vector<vector<int> > copias = entradas;
     chrono::steady_clock::time_point t0 = chrono::steady_clock::now();
-    for (int r = 0; r < k; r++) ordenar(copias[r]);
+    for (size_t r = 0; r < copias.size(); r++) ordenar(copias[r]);
     chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-    saida.swap(copias[0]);
-    return chrono::duration<double, milli>(t1 - t0).count() / k;
+    ok = true;
+    for (const vector<int>& c : copias) ok = ok && is_sorted(c.begin(), c.end());
+    return chrono::duration<double, milli>(t1 - t0).count() / copias.size();
 }
 
 // Estatística descritiva das amostras (desvio e variância amostrais, divisor n-1).
@@ -360,6 +337,7 @@ static string fmtVar(double v) {  // variância (ms²): notação científica qu
 }
 
 static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, double totalSeg, const string& caminho);
+static void imprimirTabela(const string& titulo, const vector<string>& cab, const vector<vector<string> >& linhas);
 
 // Executa o benchmark completo. Retorna 0 se tudo certo.
 static int executar(const Config& cfg, bool verboso) {
@@ -399,12 +377,12 @@ static int executar(const Config& cfg, bool verboso) {
         vector<vector<double> > tempos(NALG);
         chrono::steady_clock::time_point t0 = chrono::steady_clock::now();
         for (int e = 1; e <= cfg.execucoes; e++) {
-            vector<int> original(n);
-            gerarEntrada(original, cfg.cenario, rng);  // a MESMA entrada para todos os algoritmos
+            vector<vector<int> > entradas(repeticoes(n), vector<int>(n));
+            for (vector<int>& v : entradas) gerarEntrada(v, cfg.cenario, rng);  // as MESMAS entradas para todos
             for (int a = 0; a < NALG; a++) {
-                vector<int> saida;
-                double ms = medirMs(ALGOS[a].ordenar, original, saida);
-                if (!is_sorted(saida.begin(), saida.end())) {
+                bool ok;
+                double ms = medirMs(ALGOS[a].ordenar, entradas, ok);
+                if (!ok) {
                     cerr << "\n  ERRO: " << ALGOS[a].nome << " não ordenou (n=" << n << ", execução " << e << ")\n";
                     return 3;
                 }
@@ -440,17 +418,19 @@ static int executar(const Config& cfg, bool verboso) {
 
     // Tabela final: média de cada algoritmo e o mais rápido
     cout << "\n  Tempo médio (ms)\n";
-    snprintf(buf, sizeof buf, "  %-10s %12s %12s %12s   %s\n", "n", "Merge BU", "Quick cláss.", "Quick pers.", "Mais rápido");
-    cout << buf << "  " << string(70, '-') << "\n";
+    vector<string> cab = {"Itens (n)"};
+    for (int a = 0; a < NALG; a++) cab.push_back(ALGOS[a].nome);
+    cab.push_back("Mais rápido");
+    vector<vector<string> > linhas;
     for (size_t i = 0; i + NALG <= resultados.size(); i += NALG) {
         int melhor = 0;
         for (int a = 1; a < NALG; a++) if (resultados[i + a].media < resultados[i + melhor].media) melhor = a;
-        snprintf(buf, sizeof buf, "  %-10s %12s %12s %12s   %s\n", milhar(resultados[i].n).c_str(),
-                 fmtMs(resultados[i].media).c_str(), fmtMs(resultados[i + 1].media).c_str(),
-                 fmtMs(resultados[i + 2].media).c_str(), ALGOS[melhor].nome);
-        cout << buf;
+        vector<string> l = {milhar(resultados[i].n)};
+        for (int a = 0; a < NALG; a++) l.push_back(fmtMs(resultados[i + a].media));
+        l.push_back(ALGOS[melhor].nome);
+        linhas.push_back(l);
     }
-    cout << "  " << string(70, '-') << "\n";
+    imprimirTabela("", cab, linhas);
     snprintf(buf, sizeof buf, "  Tempo total: %.2f s  |  arquivos salvos em: %s/\n", totalSeg, cfg.saida.c_str());
     cout << buf << "  Estatística completa por tamanho: opção [7] do painel ou --tabela\n";
     return 0;
@@ -521,7 +501,7 @@ static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, 
       << "svg{width:100%;height:auto}.grade{stroke:var(--linha)}.eixo{fill:var(--suave);font-size:12px}"
       << ".s0{stroke:var(--s0)}.s1{stroke:var(--s1)}.s2{stroke:var(--s2)}.p0{fill:var(--s0)}.p1{fill:var(--s1)}.p2{fill:var(--s2)}"
       << "circle{stroke:var(--cartao);stroke-width:2}.tabela{overflow-x:auto;margin-bottom:14px}footer{color:var(--suave);font-size:12px;margin-top:28px}</style></head><body><main>"
-      << "<h1>Algoritmos de ordenação</h1><p class='sub'>Mergesort bottom-up × Quicksort clássico × Quicksort personalizado · gerado em "
+      << "<h1>Algoritmos de ordenação</h1><p class='sub'>Mergesort bottom-up × Quicksort clássico · gerado em "
       << agora() << "</p><div class='cartao meta'>"
       << "<div><b>" << milhar((long long)cfg.tamanhos.size() * cfg.execucoes * NALG) << "</b>ordenações</div>"
       << "<div><b>" << cfg.execucoes << "</b>execuções por tamanho</div>"
@@ -554,7 +534,7 @@ static void escreverRelatorioHtml(const Config& cfg, const vector<Resumo>& res, 
 static void cabecalho(const Config& c) {
     limparTela();
     cout << "  ==================================================================\n"
-         << "     BENCHMARK DE ORDENAÇÃO  ·  Merge bottom-up × Quick clássico × Quick personalizado  ·  v" << VERSAO << "\n"
+         << "     BENCHMARK DE ORDENAÇÃO  ·  Mergesort bottom-up × Quicksort clássico  ·  v" << VERSAO << "\n"
          << "     Painel administrativo\n"
          << "  ==================================================================\n\n"
          << "  Configuração atual\n"
@@ -596,7 +576,7 @@ static void imprimirTabela(const string& titulo, const vector<string>& cab, cons
         }
         return r;
     };
-    cout << "\n  " << titulo << "\n" << sep << "\n" << linha(cab) << "\n" << sep << "\n";
+    cout << "\n  " << titulo << (titulo.empty() ? "" : "\n") << sep << "\n" << linha(cab) << "\n" << sep << "\n";
     for (const vector<string>& l : linhas) cout << linha(l) << "\n";
     cout << sep << "\n";
 }
@@ -655,8 +635,9 @@ static int mostrarTabelas(const string& pasta) {
         }
         cres.push_back(l);
     }
-    imprimirTabela("Tabela " + to_string(num) + ". Crescimento do tempo médio em relação ao tamanho anterior.",
-                   {"Itens (n)", "Previsto n log n", "Merge BU", "Quick cláss.", "Quick pers."}, cres);
+    vector<string> cabC = {"Itens (n)", "Previsto n log n"};
+    for (int a = 0; a < NALG; a++) cabC.push_back(ALGOS[a].nome);
+    imprimirTabela("Tabela " + to_string(num) + ". Crescimento do tempo médio em relação ao tamanho anterior.", cabC, cres);
     cout << "\n  Leitura: CV (coeficiente de variação) = desvio / média. Abaixo de 3.000 itens os tempos são\n"
          << "  de microssegundos e variam mais. \"Previsto\" é o crescimento esperado por n log n.\n";
     return 0;
@@ -739,7 +720,7 @@ static void menu(Config cfg) {
 // =============================================================================
 
 static void ajuda() {
-    cout << "Benchmark de Ordenação — Mergesort bottom-up × Quicksort clássico × Quicksort personalizado v" << VERSAO << "\n\n"
+    cout << "Benchmark de Ordenação — Mergesort bottom-up × Quicksort clássico v" << VERSAO << "\n\n"
          << "Uso:\n"
          << "  benchmark                    abre o painel administrativo\n"
          << "  benchmark --rodar [opções]   executa sem menu\n\n"

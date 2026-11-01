@@ -1,0 +1,7 @@
+{
+  "processador": "Intel Xeon 2,10 GHz (4 núcleos)",
+  "memoria": "15 GB de RAM",
+  "sistema": "Linux (kernel 6.18)",
+  "compilador": "g++ 13.3 (GCC), padrão C++11, otimização -O2",
+  "data": "01/11/2026"
+}

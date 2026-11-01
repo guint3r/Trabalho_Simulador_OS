@@ -87,6 +87,17 @@ Cada execução grava em `resultados/`:
 - Quicksort: pivô por mediana de três + particionamento de Hoare, com recursão só no lado menor
   (pilha O(log n)).
 
+## Artigo (entrega final)
+
+`artigo/artigo_ordenacao.docx` e `artigo/artigo_ordenacao.pdf`: Título, Resumo, Introdução, Material e Métodos,
+Resultados e Discussão (6 tabelas e 4 figuras legendadas) e Conclusão, em Times New Roman 12.
+Para o PDF sair com a Times New Roman exata, abra o `.docx` no Word e use *Salvar como → PDF*.
+
+```bash
+python scripts/gerar_artigo_dados.py   # estatística descritiva + figuras (boxplot e barras)
+node scripts/gerar_artigo.js           # monta o .docx (npm install docx)
+```
+
 ## Compilar e regenerar
 
 ```bash
