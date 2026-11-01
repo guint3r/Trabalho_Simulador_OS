@@ -239,9 +239,10 @@ add(par(
   "a execução no Windows 11 utilizam a IDE Embarcadero Dev-C++, cujo compilador g++ (TDM-GCC) é acionado automaticamente pelo " +
   "script PAINEL_ADM.bat, que compila o código e executa os testes por meio de um menu. As medições apresentadas neste artigo foram " +
   `realizadas em um computador com processador ${mq.processador}, ${mq.memoria} e sistema ${mq.sistema}, com o compilador ` +
-  `${mq.compilador}. Os tempos de cada amostra foram gravados em arquivos CSV, que podem ser abertos no Excel, e a estatística ` +
-  "descritiva e os gráficos foram produzidos em Python 3 com a biblioteca Matplotlib. Os valores calculados em Python foram " +
-  "conferidos com os calculados pelo próprio programa em C++."
+  `${mq.compilador}. Os tempos de cada amostra foram gravados em arquivos CSV e organizados em uma planilha do Microsoft ` +
+  "Excel (planilha_resultados.xlsx, que acompanha este trabalho), na qual a estatística descritiva foi calculada com as funções " +
+  "MÉDIA, MED, DESVPAD, VAR, MÁXIMO e MÍNIMO. Os gráficos foram produzidos em Python 3 com a biblioteca Matplotlib, e os " +
+  "valores da planilha foram conferidos com os calculados em Python e pelo próprio programa em C++, sem nenhuma divergência."
 ));
 add(titulo2("2.2 Implementação"));
 add(par(
@@ -262,14 +263,14 @@ add(par("O experimento foi executado conforme os passos a seguir:", { indent: { 
   "O tempo foi medido com o relógio monotônico std::chrono::steady_clock, envolvendo apenas a chamada de ordenação; a geração e a cópia dos dados ficaram fora da medição.",
   "Como vetores pequenos são ordenados em frações de microssegundo, abaixo da precisão confiável do relógio, cada amostra ordenou k vetores aleatórios diferentes (k = 20.000 / n; k = 1 para n ≥ 20.000) e registrou o tempo médio por vetor.",
   "Após cada ordenação, o resultado foi verificado com std::is_sorted; nenhuma falha foi encontrada.",
-  "Os tempos foram gravados em CSV e submetidos à estatística descritiva, seguida da elaboração dos __boxplots__ e dos gráficos de barras.",
+  "Os tempos foram gravados em CSV e organizados na planilha do Excel, onde foi calculada a estatística descritiva; em seguida foram elaborados os __boxplots__ e os gráficos de barras.",
 ].forEach((t) => add(passo(t)));
 add(titulo2("2.4 Estatística descritiva"));
 add(par(
   "Para cada algoritmo e tamanho foram calculados: a média aritmética; a mediana, valor central das 20 amostras ordenadas; o " +
   "desvio padrão amostral, com divisor n − 1; a variância amostral, quadrado do desvio padrão, expressa em ms^2^; o coeficiente " +
   "de variação, dado por CV = (desvio padrão ÷ média) × 100, que mede a dispersão relativa em porcentagem; e os valores máximo e " +
-  "mínimo. Nos __boxplots__, a caixa vai do primeiro ao terceiro quartil, a linha interna marca a mediana e os pontos isolados " +
+  "mínimo. No Excel, o desvio padrão e a variância amostrais correspondem às funções DESVPAD e VAR. Nos __boxplots__, a caixa vai do primeiro ao terceiro quartil, a linha interna marca a mediana e os pontos isolados " +
   "indicam valores atípicos. Neste trabalho, considerou-se que há diferença consistente entre os algoritmos quando as caixas " +
   "(intervalos interquartis) não se sobrepõem."
 ));
@@ -279,7 +280,8 @@ add(titulo1("3 Resultados e Discussão"));
 add(par(
   "As Tabelas 1 a 5 apresentam a estatística descritiva dos tempos de execução para cada tamanho de conjunto. A Tabela 6 resume o " +
   "crescimento do tempo médio entre tamanhos consecutivos, e as Figuras 1 a 4 ilustram a distribuição das amostras, as médias, a " +
-  "variabilidade relativa e o comportamento em outros tipos de entrada."
+  "variabilidade relativa e o comportamento em outros tipos de entrada. Os dados brutos das 200 amostras e as fórmulas " +
+  "utilizadas estão na planilha que acompanha o trabalho, nas abas Dados, Estatística e Crescimento."
 ));
 const ganhoM = (n) => -difQ(n); // > 0: Merge mais rápido
 const textoTab = {

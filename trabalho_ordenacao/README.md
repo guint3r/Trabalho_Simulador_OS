@@ -93,8 +93,12 @@ Cada execução grava em `resultados/`:
 Resultados e Discussão (6 tabelas e 4 figuras legendadas) e Conclusão, em Times New Roman 12.
 Para o PDF sair com a Times New Roman exata, abra o `.docx` no Word e use *Salvar como → PDF*.
 
+`artigo/planilha_resultados.xlsx`: as 200 medições (aba Dados) e a estatística descritiva em fórmulas do Excel
+(MÉDIA, MED, DESVPAD, VAR, MÁXIMO, MÍNIMO), com o crescimento, os cenários e os gráficos.
+
 ```bash
 python scripts/gerar_artigo_dados.py   # estatística descritiva + figuras (boxplot e barras)
+python scripts/gerar_planilha.py       # planilha Excel com fórmulas (pip install openpyxl)
 node scripts/gerar_artigo.js           # monta o .docx (npm install docx)
 ```
 
