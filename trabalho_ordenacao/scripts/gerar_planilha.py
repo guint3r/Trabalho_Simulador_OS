@@ -63,7 +63,7 @@ ws.column_dimensions["A"].width = 110
 linhas = [
     ("Planilha de resultados — Mergesort bottom-up × Quicksort clássico", TITULO),
     ("Trabalho Final – Estrutura de Dados · Prof. Me. Marcelo Goulart Souza · Centro Universitário UNIFACVEST", fonte()),
-    ("Autores: Jeferson Gomes Martins, Joao Vitor Gonçalves de Almeida, Juan Flor, Igor Jesus, Guilherme Silva", fonte()),
+    ("Autores: Jeferson Gomes Martins, João Vitor Gonçalves de Almeida, Juan Flor, Igor Jesus, Guilherme Silva", fonte()),
     ("", fonte()),
     ("Abas", NEGRITO),
     ("Dados: as 200 medições (20 amostras × 5 tamanhos × 2 algoritmos), em milissegundos.", fonte()),

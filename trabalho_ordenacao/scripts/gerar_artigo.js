@@ -14,7 +14,7 @@ const ART = path.join(RAIZ, "artigo");
 const D = JSON.parse(fs.readFileSync(path.join(ART, "dados_artigo.json"), "utf8"));
 
 // ---------------------------------------------------------------- grupo
-const AUTORES = ["Jeferson Gomes Martins", "Joao Vitor Gonçalves de Almeida", "Juan Flor", "Igor Jesus", "Guilherme Silva"];
+const AUTORES = ["Jeferson Gomes Martins", "João Vitor Gonçalves de Almeida", "Juan Flor", "Igor Jesus", "Guilherme Silva"];
 const TITULO = "Análise comparativa de desempenho entre os algoritmos de ordenação Mergesort bottom-up e Quicksort clássico";
 
 // ---------------------------------------------------------------- números
@@ -237,9 +237,9 @@ add(titulo2("2.1 Ferramentas e ambiente"));
 add(par(
   "Os dois algoritmos foram implementados na linguagem C++ (padrão C++11), em um único programa de medição. O desenvolvimento e " +
   "a execução no Windows 11 utilizam a IDE Embarcadero Dev-C++, cujo compilador g++ (TDM-GCC) é acionado automaticamente pelo " +
-  "script PAINEL_ADM.bat, que compila o código e executa os testes por meio de um menu. As medições apresentadas neste artigo foram " +
-  `realizadas em um computador com processador ${mq.processador}, ${mq.memoria} e sistema ${mq.sistema}, com o compilador ` +
-  `${mq.compilador}. Os tempos de cada amostra foram gravados em arquivos CSV e organizados em uma planilha do Microsoft ` +
+  "script PAINEL_ADM.bat, que compila o código e executa os testes por meio de um menu. Para as medições apresentadas neste " +
+  `artigo, usamos um ${mq.local || "computador"}, com processador ${mq.processador}, ${mq.memoria} e sistema ${mq.sistema}, ` +
+  `com o compilador ${mq.compilador}. Os tempos de cada amostra foram gravados em arquivos CSV e organizados em uma planilha do Microsoft ` +
   "Excel (planilha_resultados.xlsx, que acompanha este trabalho), na qual a estatística descritiva foi calculada com as funções " +
   "MÉDIA, MED, DESVPAD, VAR, MÁXIMO e MÍNIMO. Os gráficos foram produzidos em Python 3 com a biblioteca Matplotlib, e os " +
   "valores da planilha foram conferidos com os calculados em Python e pelo próprio programa em C++, sem nenhuma divergência."

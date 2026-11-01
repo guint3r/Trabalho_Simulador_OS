@@ -53,7 +53,7 @@ const CINZA = "4A5060";
 const pres = new pptxgen();
 pres.layout = "LAYOUT_WIDE"; // 13,333 x 7,5 pol (16:9, igual ao Canva)
 pres.title = "Mergesort × Quicksort";
-pres.author = "Jeferson Gomes Martins, Joao Vitor Gonçalves de Almeida, Juan Flor, Igor Jesus, Guilherme Silva";
+pres.author = "Jeferson Gomes Martins, João Vitor Gonçalves de Almeida, Juan Flor, Igor Jesus, Guilherme Silva";
 pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
 const S = pres.SchemeColor;
 const FUNDO = path.join(ASSETS, "fundo.png");
@@ -161,7 +161,7 @@ async function main() {
   linha(s, [[1, 2, 3, 4, 5, 6, 7, 8, 9]], 6.35, 3.5, (v) => (v <= 4 ? ESTILO.merge : v === 5 ? ESTILO.pivo : ESTILO.quick), 0.62, 0.07, 0, 22);
   s.addText([
     { text: "Integrantes: ", options: { bold: true, color: S.text2 } },
-    { text: "Jeferson Gomes Martins · Joao Vitor Gonçalves de Almeida · Juan Flor · Igor Jesus · Guilherme Silva" },
+    { text: "Jeferson Gomes Martins · João Vitor Gonçalves de Almeida · Juan Flor · Igor Jesus · Guilherme Silva" },
   ], TXT({ x: 0.7, y: 5.2, w: 10.4, h: 0.95, fontSize: 20, objectName: "integrantes" }));
   s.addText("Estrutura de Dados · Prof. Me. Marcelo Goulart Souza · Centro Universitário UNIFACVEST",
     TXT({ x: 0.7, y: 6.55, w: 10.4, h: 0.4, fontSize: 16, color: CINZA, objectName: "disciplina" }));
@@ -209,7 +209,7 @@ async function main() {
     { text: "IDE Dev-C++ no Windows 11", options: { bullet: { indent: 18 }, breakLine: true } },
     { text: "PAINEL_ADM.bat: compila e roda tudo", options: { bullet: { indent: 18 }, breakLine: true } },
     { text: "Python + Matplotlib: estatística e gráficos", options: { bullet: { indent: 18 }, breakLine: true } },
-    { text: `Medições: ${D.maquina.processador}`, options: { bullet: { indent: 18 } } },
+    { text: `Medições: servidor Linux, ${D.maquina.processador}`, options: { bullet: { indent: 18 } } },
   ], TXT({ x: 7.85, y: 1.85, w: 4.5, h: 4.5, fontSize: 19, paraSpaceAfter: 8, objectName: "ferramentas texto" }));
   s.addNotes("PESSOA 1 (até 3:00). Passo a passo da medição. Para vetores pequenos, que ordenam em menos de 1 microssegundo, cada medição ordena vários vetores diferentes e divide o tempo. Se der, mostrar o PAINEL_ADM.bat rodando (opção 2) e a tabela da opção 11.");
 
