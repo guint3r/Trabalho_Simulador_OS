@@ -318,6 +318,7 @@ const textoTab = {
     "Execuções adicionais de verificação mantiveram o mesmo padrão.",
 };
 NS.forEach((n, i) => {
+  add(par(`A Tabela ${i + 1} ilustra a estatística descritiva dos dados obtidos com ${mil(n)} números.`, { keepNext: true, keepLines: true }));
   add(legenda(`Tabela ${i + 1}.`, `Estatística descritiva dos algoritmos de ordenação com o conjunto de ${mil(n)} dados.`));
   add(tabelaEstatistica(n), fonte());
   add(par(textoTab[n]));
@@ -328,6 +329,7 @@ const linhasCres = NS.slice(1).map((n, k) => {
   const i = k + 1;
   return [`${mil(NS[i - 1])} → ${mil(n)}`, `${br(prev(i), 1)}×`, `${br(razao("mergesort", i), 1)}×`, `${br(razao("quicksort", i), 1)}×`];
 });
+add(par("A Tabela 6 ilustra quantas vezes o tempo médio cresceu a cada vez que o conjunto de dados foi multiplicado por 10, comparado com o crescimento previsto pela teoria.", { keepNext: true, keepLines: true }));
 add(legenda("Tabela 6.", "Crescimento do tempo médio a cada vez que o conjunto de dados é multiplicado por 10."));
 add(tabela([2600, 2157, 2157, 2157], ["Tamanhos", "Previsto por n log n", "Mergesort bottom-up", "Quicksort clássico"], linhasCres), fonte());
 add(par(
