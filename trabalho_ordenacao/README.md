@@ -80,12 +80,15 @@ Cada execução grava em `resultados/`:
 - Números de 0 a 1.000.000 gerados com `std::mt19937` e semente fixa (42): resultados reproduzíveis.
 - Tempo medido com `std::chrono::steady_clock`, só em volta da ordenação.
 - Uma rodada de aquecimento por tamanho é descartada.
-- Vetores pequenos ordenam mais rápido que a precisão do relógio. Por isso cada medição ordena
-  k cópias e divide o tempo por k (k = 20.000 / n; para n ≥ 20.000, k = 1).
+- Vetores pequenos ordenam mais rápido que a precisão do relógio. Por isso cada amostra ordena
+  k vetores aleatórios **diferentes** e divide o tempo por k (k = 20.000 / n; para n ≥ 20.000, k = 1).
+  Repetir o mesmo vetor deixava os tempos baixos demais, porque o processador "decora" a entrada.
 - `std::is_sorted` confere todo resultado.
 - Mergesort bottom-up: blocos de 1, 2, 4, 8… intercalados em dois laços (⌈log₂ n⌉ passadas).
-- Quicksort: pivô por mediana de três + particionamento de Hoare, com recursão só no lado menor
-  (pilha O(log n)).
+- Quicksort clássico: pivô = elemento do meio do trecho; dois índices andam um em direção ao outro
+  trocando os elementos fora de lugar; recursão nos dois lados.
+- Estatística por algoritmo e tamanho: média, mediana, desvio padrão, variância, coeficiente de
+  variação, máximo e mínimo (opção [11] do painel ou `--tabela`).
 
 ## Artigo (entrega final)
 

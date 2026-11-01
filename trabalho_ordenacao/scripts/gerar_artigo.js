@@ -159,19 +159,19 @@ add(centro("**RESUMO**", { spacing: { line: 240, lineRule: LineRuleType.AUTO, be
 add(new Paragraph({
   alignment: AlignmentType.JUSTIFIED, spacing: { line: 240, lineRule: LineRuleType.AUTO, after: 120 },
   children: runs(
-    "Este trabalho compara o desempenho de dois algoritmos de ordenação por comparação: o Mergesort na versão __bottom-up__ " +
+    "Neste trabalho, comparamos o desempenho de dois algoritmos de ordenação por comparação: o Mergesort na versão __bottom-up__ " +
     "(iterativa) e o Quicksort clássico, com pivô no elemento central, ambos implementados em C++. Cada algoritmo ordenou " +
     "conjuntos de 30, 300, 3.000, 30.000 e 300.000 números inteiros aleatórios, com 20 amostras para cada tamanho, totalizando " +
-    "200 ordenações. Em cada amostra os dois algoritmos receberam exatamente os mesmos dados, e todos os resultados foram " +
-    "verificados quanto à ordenação correta. Os tempos foram resumidos por estatística descritiva (média, mediana, desvio " +
-    "padrão, variância, coeficiente de variação, máximo e mínimo) e ilustrados por __boxplots__ e gráficos de barras. Nos " +
+    "200 ordenações. Em cada amostra, os dois algoritmos receberam exatamente os mesmos dados, e conferimos se todos os " +
+    "resultados saíram ordenados. Resumimos os tempos por estatística descritiva (média, mediana, desvio padrão, variância, " +
+    "coeficiente de variação, máximo e mínimo) e os ilustramos com __boxplots__ e gráficos de barras. Nos " +
     `conjuntos de até 3.000 elementos os tempos ficaram na casa dos microssegundos e as diferenças entre os algoritmos ` +
     `(de ${pct(Math.min(...pequenosDif))} a ${pct(Math.max(...pequenosDif))}) ficaram dentro da variação das amostras, caracterizando empate técnico. ` +
     `A partir de 30.000 elementos o Quicksort clássico foi mais rápido, com tempo médio ${pct(difQ(30000))} e ${pct(difQ(300000))} menor ` +
     "para 30.000 e 300.000 elementos, respectivamente. O crescimento do tempo dos dois algoritmos acompanhou a previsão " +
     `teórica O(n log n): a cada vez que a entrada foi multiplicada por 10, o tempo médio cresceu entre ${br(rMin, 1)} e ${br(rMax, 1)} vezes. ` +
     "Testes complementares com entradas já ordenadas, invertidas e com muitos valores repetidos mantiveram a vantagem do " +
-    "Quicksort. Conclui-se que o Quicksort clássico é a melhor escolha quando se busca menor tempo médio e pouco uso de " +
+    "Quicksort. Concluímos que o Quicksort clássico é a melhor escolha quando se busca menor tempo médio e pouco uso de " +
     "memória, enquanto o Mergesort __bottom-up__ é preferível quando são exigidos estabilidade e tempo garantido no pior caso."
   ),
 }));
@@ -226,7 +226,7 @@ add(par(
 ));
 add(titulo2("1.3 Objetivo"));
 add(par(
-  "O objetivo deste trabalho é comparar experimentalmente o tempo de execução do Mergesort __bottom-up__ e do Quicksort clássico " +
+  "Nosso objetivo é comparar experimentalmente o tempo de execução do Mergesort __bottom-up__ e do Quicksort clássico " +
   "em conjuntos de 30 a 300.000 números, analisando os resultados por meio de estatística descritiva, __boxplots__ e gráficos " +
   "de barras, e relacionando o comportamento observado com a teoria de cada algoritmo."
 ));
@@ -235,43 +235,51 @@ add(par(
 add(titulo1("2 Material e Métodos"));
 add(titulo2("2.1 Ferramentas e ambiente"));
 add(par(
-  "Os dois algoritmos foram implementados na linguagem C++ (padrão C++11), em um único programa de medição. O desenvolvimento e " +
-  "a execução no Windows 11 utilizam a IDE Embarcadero Dev-C++, cujo compilador g++ (TDM-GCC) é acionado automaticamente pelo " +
-  "script PAINEL_ADM.bat, que compila o código e executa os testes por meio de um menu. Para as medições apresentadas neste " +
+  "Implementamos os dois algoritmos na linguagem C++ (padrão C++11), em um único programa de medição. O projeto foi preparado " +
+  "para ser compilado e executado no Windows 11 com a IDE Embarcadero Dev-C++: o script PAINEL_ADM.bat localiza o compilador " +
+  "g++ (TDM-GCC) da IDE, compila o código e executa os testes por meio de um menu. Para as medições apresentadas neste " +
   `artigo, usamos um ${mq.local || "computador"}, com processador ${mq.processador}, ${mq.memoria} e sistema ${mq.sistema}, ` +
-  `com o compilador ${mq.compilador}. Os tempos de cada amostra foram gravados em arquivos CSV e organizados em uma planilha do Microsoft ` +
-  "Excel (planilha_resultados.xlsx, que acompanha este trabalho), na qual a estatística descritiva foi calculada com as funções " +
-  "MÉDIA, MED, DESVPAD, VAR, MÁXIMO e MÍNIMO. Os gráficos foram produzidos em Python 3 com a biblioteca Matplotlib, e os " +
-  "valores da planilha foram conferidos com os calculados em Python e pelo próprio programa em C++, sem nenhuma divergência."
+  `com o compilador ${mq.compilador}. Gravamos os tempos de cada amostra em arquivos CSV e os organizamos em uma planilha do ` +
+  "Microsoft Excel (planilha_resultados.xlsx, que acompanha este trabalho), na qual calculamos a estatística descritiva com as " +
+  "funções MÉDIA, MED, DESVPAD, VAR, MÁXIMO e MÍNIMO. Os gráficos foram feitos em Python 3 com a biblioteca Matplotlib, e " +
+  "conferimos os valores da planilha com os calculados em Python e pelo próprio programa em C++, sem nenhuma divergência."
 ));
 add(titulo2("2.2 Implementação"));
 add(par(
-  "O Mergesort __bottom-up__ foi implementado com dois laços: o externo controla a largura dos blocos (1, 2, 4, 8, ...) e o interno " +
+  "No Mergesort __bottom-up__, usamos dois laços: o externo controla a largura dos blocos (1, 2, 4, 8, ...) e o interno " +
   "percorre o vetor intercalando cada par de blocos vizinhos com o auxílio de um vetor auxiliar do mesmo tamanho. Quando o tamanho " +
-  "do vetor não é potência de 2, o último bloco é menor ou fica sem par e é intercalado em uma passada posterior. O Quicksort " +
-  "clássico foi implementado de forma recursiva, com pivô igual ao elemento central do trecho e particionamento por dois índices que " +
+  "do vetor não é potência de 2, o último bloco é menor ou fica sem par e é intercalado em uma passada posterior. Já o Quicksort " +
+  "clássico ficou recursivo, com pivô igual ao elemento central do trecho e particionamento por dois índices que " +
   "avançam um em direção ao outro, trocando os elementos fora de lugar."
 ));
 add(titulo2("2.3 Procedimento experimental"));
-add(par("O experimento foi executado conforme os passos a seguir:", { indent: { firstLine: 709 } }));
+add(par("Seguimos os passos abaixo:", { indent: { firstLine: 709 } }));
 [
-  "Foram definidos os cinco tamanhos de conjunto exigidos: 30, 300, 3.000, 30.000 e 300.000 números inteiros.",
-  "Para cada tamanho foram coletadas 20 amostras de tempo de cada algoritmo, totalizando 200 ordenações.",
-  "Os números foram gerados aleatoriamente entre 0 e 1.000.000 pelo gerador Mersenne Twister (std::mt19937), com semente fixa 42, o que permite reproduzir exatamente os mesmos dados.",
+  "Definimos os cinco tamanhos de conjunto exigidos: 30, 300, 3.000, 30.000 e 300.000 números inteiros.",
+  "Para cada tamanho, coletamos 20 amostras de tempo de cada algoritmo, totalizando 200 ordenações.",
+  "Geramos os números aleatoriamente entre 0 e 1.000.000 com o gerador Mersenne Twister (std::mt19937), com semente fixa 42, o que permite reproduzir exatamente os mesmos dados.",
   "Em cada amostra, os dois algoritmos ordenaram cópias dos mesmos vetores, garantindo uma comparação justa.",
-  "Antes das amostras de cada tamanho foi feita uma execução de aquecimento, descartada, para reduzir efeitos de memória cache e de alocação inicial.",
-  "O tempo foi medido com o relógio monotônico std::chrono::steady_clock, envolvendo apenas a chamada de ordenação; a geração e a cópia dos dados ficaram fora da medição.",
+  "Antes das amostras de cada tamanho, fizemos uma execução de aquecimento, descartada, para reduzir efeitos de memória cache e de alocação inicial.",
+  "Medimos o tempo com o relógio monotônico std::chrono::steady_clock, envolvendo apenas a chamada de ordenação; a geração e a cópia dos dados ficaram fora da medição.",
   "Como vetores pequenos são ordenados em frações de microssegundo, abaixo da precisão confiável do relógio, cada amostra ordenou k vetores aleatórios diferentes (k = 20.000 / n; k = 1 para n ≥ 20.000) e registrou o tempo médio por vetor.",
-  "Após cada ordenação, o resultado foi verificado com std::is_sorted; nenhuma falha foi encontrada.",
-  "Os tempos foram gravados em CSV e organizados na planilha do Excel, onde foi calculada a estatística descritiva; em seguida foram elaborados os __boxplots__ e os gráficos de barras.",
+  "Após cada ordenação, verificamos o resultado com std::is_sorted; não houve nenhuma falha.",
+  "Gravamos os tempos em CSV e os organizamos na planilha do Excel, onde calculamos a estatística descritiva; em seguida, elaboramos os __boxplots__ e os gráficos de barras.",
 ].forEach((t) => add(passo(t)));
+add(par(
+  "Um cuidado que só percebemos durante os testes foi a forma de medir os vetores pequenos. Em uma versão preliminar, repetíamos " +
+  "k vezes o mesmo vetor, e os tempos de 30 e 300 elementos ficaram artificialmente baixos: o crescimento de 300 para 3.000 " +
+  "elementos passou de 40 vezes, muito acima das cerca de 14 vezes previstas pela teoria. Isso acontece porque, ao ordenar " +
+  "repetidamente a mesma entrada, o processador aprende o padrão das comparações (previsão de desvios) e executa mais rápido do " +
+  "que faria com dados novos. Por isso, passamos a usar k vetores diferentes em cada amostra, o que trouxe os resultados para " +
+  "perto da previsão teórica, como mostra a Tabela 6."
+));
 add(titulo2("2.4 Estatística descritiva"));
 add(par(
-  "Para cada algoritmo e tamanho foram calculados: a média aritmética; a mediana, valor central das 20 amostras ordenadas; o " +
+  "Para cada algoritmo e tamanho, calculamos: a média aritmética; a mediana, valor central das 20 amostras ordenadas; o " +
   "desvio padrão amostral, com divisor n − 1; a variância amostral, quadrado do desvio padrão, expressa em ms^2^; o coeficiente " +
   "de variação, dado por CV = (desvio padrão ÷ média) × 100, que mede a dispersão relativa em porcentagem; e os valores máximo e " +
   "mínimo. No Excel, o desvio padrão e a variância amostrais correspondem às funções DESVPAD e VAR. Nos __boxplots__, a caixa vai do primeiro ao terceiro quartil, a linha interna marca a mediana e os pontos isolados " +
-  "indicam valores atípicos. Neste trabalho, considerou-se que há diferença consistente entre os algoritmos quando as caixas " +
+  "indicam valores atípicos. Neste trabalho, consideramos que há diferença consistente entre os algoritmos quando as caixas " +
   "(intervalos interquartis) não se sobrepõem."
 ));
 
@@ -384,7 +392,7 @@ add(par(
 // 4 Conclusão
 add(titulo1("4 Conclusão"));
 add(par(
-  "O experimento comparou o Mergesort __bottom-up__ e o Quicksort clássico em 200 ordenações de 30 a 300.000 números, com a mesma " +
+  "Comparamos o Mergesort __bottom-up__ e o Quicksort clássico em 200 ordenações de 30 a 300.000 números, com a mesma " +
   "entrada para os dois algoritmos e tratamento por estatística descritiva. Para conjuntos de até 3.000 elementos os algoritmos " +
   "empataram tecnicamente, com diferenças menores que a variação natural das medições. A partir de 30.000 elementos o Quicksort " +
   `clássico foi consistentemente mais rápido, com tempo médio ${pct(difQ(30000))} menor em 30.000 dados e ${pct(difQ(300000))} menor ` +
@@ -393,13 +401,16 @@ add(par(
 add(par(
   "O crescimento do tempo dos dois algoritmos acompanhou de perto a previsão O(n log n), confirmando na prática a análise teórica. " +
   "A diferença entre eles, portanto, não está na ordem de complexidade, mas nas constantes: o Mergesort copia todos os elementos " +
-  "para um vetor auxiliar a cada passada, enquanto o Quicksort reorganiza o próprio vetor."
+  "para um vetor auxiliar a cada passada, enquanto o Quicksort reorganiza o próprio vetor. Para o grupo, esse foi o principal " +
+  "aprendizado: a notação O mostra como o tempo cresce, mas não decide sozinha qual algoritmo é mais rápido. Detalhes de " +
+  "implementação, como as cópias de memória e a escolha do pivô, fazem diferença real, e a própria forma de medir precisa de " +
+  "cuidado para não produzir números enganosos, como vimos com os vetores pequenos."
 ));
 add(par(
-  "Conclui-se que o Quicksort clássico é a escolha mais indicada quando o objetivo é o menor tempo médio com pouco uso de memória, " +
+  "Concluímos que o Quicksort clássico é a escolha mais indicada quando o objetivo é o menor tempo médio com pouco uso de memória, " +
   "desde que o pivô seja bem escolhido, como o elemento central usado neste trabalho. Já o Mergesort __bottom-up__ é preferível " +
   "quando é necessário garantir tempo O(n log n) mesmo no pior caso, manter a estabilidade da ordenação ou evitar recursão. Como " +
-  "trabalho futuro, sugere-se repetir o experimento em outros computadores e incluir algoritmos quadráticos, como o Insertionsort, " +
+  "trabalho futuro, pretendemos repetir o experimento em outros computadores e incluir algoritmos quadráticos, como o Insertionsort, " +
   "para evidenciar a diferença entre as classes de complexidade."
 ));
 
