@@ -32,7 +32,7 @@ trabalho_ordenacao/
 ├── resultados/                CSVs, relatório HTML, gráfico e histórico
 │   └── cenario_*/             resultados de cada cenário de entrada
 ├── apresentacao/
-│   ├── slides.pptx            14 slides; o roteiro de cada pessoa está nas anotações
+│   ├── slides.pptx            13 slides no estilo do Canva; o roteiro de cada pessoa está nas anotações
 │   ├── estudo_mergesort_bottom_up.pdf   material de estudo do bottom-up
 │   └── divisao_trabalho.pdf   quem fala o quê, tempos, tarefas e checklist
 └── scripts/                   geradores do gráfico, do PDF e dos slides

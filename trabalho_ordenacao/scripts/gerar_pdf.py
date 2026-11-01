@@ -75,23 +75,22 @@ H(Spacer(1, 8))
 H(P("Cronograma da apresentação", h1))
 H(tabela([
     ["Tempo", "Bloco", "Responsável", "Slides"],
-    ["0:00 – 2:30", "<b>1. Abertura, problema e metodologia</b>", "Pessoa 1: ____________", "1 – 3"],
-    ["2:30 – 5:00", "<b>2. Mergesort: como funciona e complexidade</b>", "Pessoa 2: ____________", "4 – 5"],
-    ["5:00 – 7:30", "<b>3. Quicksort: como funciona e complexidade</b>", "Pessoa 3: ____________", "6 – 7"],
-    ["7:30 – 10:30", "<b>4. Implementação, medição e demonstração ao vivo</b>", "Pessoa 4: ____________", "8 – 9"],
-    ["10:30 – 13:30", "<b>5. Resultados, análise e conclusão</b>", "Pessoa 5: ____________", "10 – 13"],
-    ["13:30 – 15:00", "Perguntas (cada um responde sobre a sua parte)", "Todos", "14"],
+    ["0:00 – 3:00", "<b>1. Abertura, como comparar e como medimos</b>", "Pessoa 1: ____________", "1 – 3"],
+    ["3:00 – 5:30", "<b>2. Mergesort bottom-up</b>", "Pessoa 2: ____________", "4"],
+    ["5:30 – 8:30", "<b>3. Quicksort clássico e complexidade</b>", "Pessoa 3: ____________", "5 – 6"],
+    ["8:30 – 11:30", "<b>4. Resultados, estatística descritiva e boxplot</b>", "Pessoa 4: ____________", "7 – 9"],
+    ["11:30 – 14:00", "<b>5. Crescimento, outras entradas e conclusão</b>", "Pessoa 5: ____________", "10 – 13"],
+    ["14:00 – 15:00", "Perguntas (cada um responde sobre a sua parte)", "Todos", "13"],
 ], [2.5 * cm, 7.4 * cm, 4.6 * cm, 2.0 * cm]))
 H(Spacer(1, 10))
 H(P("Linha condutora (o que a plateia deve levar para casa)", h1))
 historia.extend(bullets([
-    "Os dois algoritmos são O(n log n) no caso médio, e as medições confirmam: a cada vez que n cresce 10×, "
-    "o tempo cresce um pouco mais que 10× (o fator log n).",
-    "O Quicksort foi ~5% a 10% mais rápido nos tamanhos grandes, porque troca elementos no próprio vetor "
-    "(melhor uso de cache) e não precisa copiar para um vetor auxiliar.",
-    "O Mergesort ganha em garantia: é O(n log n) mesmo no pior caso e é estável. O Quicksort pode cair para "
-    "O(n²) com pivô ruim, e por isso usamos a mediana de três.",
-    "Nos tamanhos pequenos (30 e 300) tudo leva microssegundos e a diferença oscila de uma rodada para outra.",
+    "Até 3.000 dados os dois algoritmos empatam: as diferenças ficam dentro da variação das medições.",
+    "Com 30.000 e 300.000 dados o Quicksort clássico foi cerca de 9% e 15% mais rápido, porque troca elementos "
+    "no próprio vetor, enquanto o Mergesort copia tudo para um vetor auxiliar a cada passada.",
+    "Quando os dados crescem 10×, o tempo cresceu de 11× a 15×: o comportamento n log n previsto pela teoria.",
+    "O Mergesort ganha em garantia (O(n log n) sempre) e estabilidade; o Quicksort depende do pivô, e o pivô do "
+    "meio evitou o pior caso em vetores já ordenados.",
 ]))
 
 H(PageBreak())
@@ -99,62 +98,44 @@ H(PageBreak())
 # ---------- Paginas 2-3: cada pessoa ----------
 H(P("O que cada pessoa faz", h1))
 pessoas = [
-    ("Pessoa 1 — Abertura, problema e metodologia", "0:00 – 2:30 · slides 1 a 3", TINTA, [
-        "<b>Slide 1:</b> título, nomes do grupo, disciplina.",
-        "<b>Slide 2:</b> o problema: por que ordenar importa e por que comparar algoritmos medindo tempo, "
-        "não só pela notação O.",
-        "<b>Slide 3:</b> metodologia: 5 tamanhos, 20 execuções cada, mesmos dados para os dois algoritmos, "
-        "números aleatórios de 0 a 1.000.000 com semente fixa (42), compilação com <font name='DVM'>-O2</font>, "
-        "máquina usada (processador, sistema operacional).",
+    ("Pessoa 1 — Abertura, como comparar e como medimos", "0:00 – 3:00 · slides 1 a 3", TINTA, [
+        "<b>Slide 1:</b> apresentar o grupo e o tema: Mergesort bottom-up × Quicksort clássico em C++.",
+        "<b>Slide 2:</b> 5 tamanhos (30 a 300.000), 20 amostras cada, mesmos dados para os dois: 200 ordenações.",
+        "<b>Slide 3:</b> passo a passo da medição e ferramentas (C++, Dev-C++, PAINEL_ADM.bat, Python).",
     ], [
-        "Anotar a configuração da máquina onde o teste final for rodado.",
-        "Colocar os nomes do grupo no slide 1.",
+        "Testar o <font name='DVM'>PAINEL_ADM.bat</font> no computador da apresentação (opções [2] e [11]) e levar um print de reserva.",
         "Controlar o tempo no ensaio (cada bloco tem horário de início na tabela da página 1).",
     ]),
-    ("Pessoa 2 — Mergesort bottom-up", "2:30 – 5:00 · slides 4 e 5", AZUL, [
-        "<b>Slide 4:</b> bottom-up: começa com blocos de 1 elemento e intercala blocos vizinhos, dobrando a "
-        "largura a cada passada (2, 4, 8…). Sem recursão. Explicar o diagrama com os 8 números.",
-        "<b>Slide 5:</b> complexidade: O(n log n) no melhor, médio e pior caso; memória extra O(n) "
-        "(vetor auxiliar, ~1,2 MB para 300.000 inteiros); algoritmo estável.",
+    ("Pessoa 2 — Mergesort bottom-up", "3:00 – 5:30 · slide 4", AZUL, [
+        "<b>Slide 4:</b> blocos de 1 já estão ordenados; intercala blocos vizinhos de 2, 4, 8… Com 9 números são "
+        "4 passadas; com 300.000, 19. Custo n log n sempre, estável, usa vetor auxiliar.",
     ], [
-        "Ler o material de estudo <font name='DVM'>apresentacao/estudo_mergesort_bottom_up.pdf</font> "
-        "(ou PAINEL_ADM.bat, opção [10]): tem o passo a passo, o código comentado e as perguntas da banca.",
-        "Estudar as funções <font name='DVM'>mergesort</font> e <font name='DVM'>intercalar</font> em "
-        "<font name='DVM'>benchmark.cpp</font>.",
-        "Preparar resposta para: “qual a diferença entre bottom-up e top-down?” e “por que log n passadas?”.",
+        "Ler o material de estudo <font name='DVM'>apresentacao/estudo_mergesort_bottom_up.pdf</font> (painel, opção [10]).",
+        "Preparar resposta para: “qual a diferença entre bottom-up e top-down?”.",
     ]),
-    ("Pessoa 3 — Quicksort", "5:00 – 7:30 · slides 6 e 7", LARANJA, [
-        "<b>Slide 6:</b> ideia: escolhe um pivô, separa menores à esquerda e maiores à direita "
-        "(particionamento de Hoare) e repete em cada lado. Exemplo com os mesmos 8 números do slide 4.",
-        "<b>Slide 7:</b> complexidade: O(n log n) no caso médio, O(n²) no pior caso; memória extra só da "
-        "recursão, O(log n); não é estável. Explicar a mediana de três como defesa contra o pior caso.",
+    ("Pessoa 3 — Quicksort clássico e complexidade", "5:30 – 8:30 · slides 5 e 6", LARANJA, [
+        "<b>Slide 5:</b> pivô = elemento do meio (6); dois índices trocam quem está do lado errado; resulta em "
+        "[5 3 2 1 4] e [6 8 9 7]; repete em cada lado.",
+        "<b>Slide 6:</b> n log n contra n²: com 300.000 itens, milhões contra bilhões de passos.",
     ], [
-        "Estudar <font name='DVM'>quicksortRec</font> em <font name='DVM'>benchmark.cpp</font>.",
-        "O slide 6 usa o mesmo exemplo de 8 números do slide 4: treinar a partição passo a passo.",
-        "Preparar resposta para: “o que acontece com um vetor já ordenado e pivô no primeiro elemento?”.",
+        "Estudar a função <font name='DVM'>quickRec</font> em <font name='DVM'>src/benchmark.cpp</font>.",
+        "Preparar resposta para: “o que acontece se o pivô for sempre o menor elemento?”.",
     ]),
-    ("Pessoa 4 — Implementação, medição e demo", "7:30 – 10:30 · slides 8 e 9", TINTA, [
-        "<b>Slide 8:</b> como medimos: <font name='DVM'>std::chrono::steady_clock</font> em volta da chamada, "
-        "uma rodada de aquecimento descartada, os dois algoritmos ordenam cópias do mesmo vetor e "
-        "<font name='DVM'>std::is_sorted</font> confere o resultado. Vetores pequenos: k cópias, tempo dividido por k.",
-        "<b>Slide 9 / demo:</b> abrir o <font name='DVM'>PAINEL_ADM.bat</font>, escolher a opção [2] (roda em ~2 s) "
-        "e mostrar o relatório que abre no navegador.",
+    ("Pessoa 4 — Resultados, estatística e boxplot", "8:30 – 11:30 · slides 7 a 9", TINTA, [
+        "<b>Slide 7:</b> tabela de médias: empate até 3.000; Quick mais rápido em 30.000 e 300.000.",
+        "<b>Slide 8:</b> estatística descritiva de 300.000: média, mediana, desvio, variância, CV e máximo/mínimo.",
+        "<b>Slide 9:</b> boxplot: caixas sobrepostas = empate; caixas separadas = diferença real.",
     ], [
-        "Testar o <font name='DVM'>PAINEL_ADM.bat</font> no computador da apresentação (precisa de Dev-C++ ou MinGW) e levar um print de reserva.",
-        "Rodar a versão final do teste (opções [2] e [3]) e passar a pasta resultados para a Pessoa 5.",
-        "Preparar resposta para: “por que usar a mesma entrada nos dois algoritmos?”.",
+        "Saber explicar mediana, desvio padrão, coeficiente de variação e quartis (está no artigo, seção 2.4).",
+        "Se o grupo rodar no próprio PC antes, comentar se os números de lá seguem o mesmo padrão.",
     ]),
-    ("Pessoa 5 — Resultados, análise e conclusão", "10:30 – 13:30 · slides 10 a 13", TINTA, [
-        "<b>Slide 10:</b> tabela de médias e desvios (a da página seguinte).",
-        "<b>Slide 11:</b> o gráfico em escala log: as duas retas quase paralelas mostram o mesmo crescimento "
-        "n log n; o Quicksort fica sempre um pouco abaixo nos tamanhos grandes.",
-        "<b>Slide 12:</b> outros cenários de entrada (já ordenado, invertido, muitos repetidos): o Quicksort venceu em todos.",
-        "<b>Slide 13:</b> conclusão: quando usar cada um (Quicksort quando velocidade média importa; "
-        "Mergesort quando precisa de garantia de pior caso ou estabilidade).",
+    ("Pessoa 5 — Crescimento, outras entradas e conclusão", "11:30 – 14:00 · slides 10 a 13", LARANJA, [
+        "<b>Slide 10:</b> dados ×10 → tempo ×11 a ×15, perto do previsto por n log n; n² seria ×100.",
+        "<b>Slide 11:</b> com entradas ordenadas, invertidas ou repetidas o Quick foi 45% a 55% mais rápido.",
+        "<b>Slides 12 e 13:</b> vantagens e desvantagens, qual escolher, agradecimento e perguntas.",
     ], [
-        "Se os números mudarem no teste final, atualizar a tabela e os gráficos dos slides 10 a 12.",
-        "Treinar a explicação do crescimento: 10× mais dados → ~12 a 13× mais tempo (n log n). A opção [11] do painel mostra as tabelas.",
-        "Conduzir a rodada de perguntas (slide 14).",
+        "Conduzir a rodada de perguntas (14:00 a 15:00).",
+        "Ler a Conclusão do artigo.",
     ]),
 ]
 for nome, quando, cor, fala, tarefas in pessoas:
@@ -166,11 +147,11 @@ for nome, quando, cor, fala, tarefas in pessoas:
 H(PageBreak())
 
 # ---------- Pagina: resultados ----------
-H(P("Resultados já medidos (para os slides 10 e 11)", h1))
+H(P("Resultados já medidos (slides 7 a 10)", h1))
 H(P("Média e desvio padrão de 20 execuções, em milissegundos. Medido em um Intel Xeon 2,8 GHz; "
     "rodem de novo na máquina de vocês (PAINEL_ADM.bat, opção [2]). Os números mudam, o padrão se mantém.", pequeno))
 H(Spacer(1, 6))
-linhas = [["n", "Mergesort bottom-up (ms)", "Quicksort (ms)", "Quicksort vs. Mergesort"]]
+linhas = [["n", "Mergesort bottom-up (ms)", "Quicksort clássico (ms)", "Quicksort vs. Mergesort"]]
 for n in NS:
     m, dm = res[("mergesort", n)]; q, dq = res[("quicksort", n)]
     dif = (m - q) / m * 100
@@ -181,7 +162,7 @@ H(tabela(linhas, [2.6 * cm, 4.4 * cm, 4.4 * cm, 5.1 * cm]))
 H(Spacer(1, 10))
 H(Image(os.path.join(RES, "grafico.png"), width=16.5 * cm, height=16.5 * cm * 4.2 / 7))
 H(Spacer(1, 6))
-H(P("Leitura rápida: de 30.000 para 300.000 (10× mais dados) o tempo cresceu ~13×, perto do previsto por "
+H(P("Leitura rápida: de 30.000 para 300.000 (10× mais dados) o tempo cresceu de 11× a 12×, perto do previsto por "
     "n log n (10 × log 300.000 / log 30.000 ≈ 12,2). Um algoritmo O(n²) cresceria 100×.", pequeno))
 
 H(Spacer(1, 12))
@@ -189,7 +170,7 @@ H(P("Checklist do grupo", h1))
 H(tabela([
     ["", "Tarefa", "Quem"],
     ["☐", "Preencher os nomes na tabela da página 1 e combinar o prazo dos slides", "Todos"],
-    ["☐", "Nomes colocados no slide 1", "Pessoa 1"],
+    ["☐", "Conferir os nomes no slide 1 e no artigo", "Pessoa 1"],
     ["☐", "Teste final rodado, CSVs e gráfico atualizados", "Pessoas 4 e 5"],
     ["☐", "Cada um leu as anotações do apresentador dos seus slides", "Todos"],
     ["☐", "Ensaio completo cronometrado (meta: 13:30 sem as perguntas)", "Todos"],

@@ -168,11 +168,11 @@ H(tabela([
 # 5. Comparação
 H(P("5. Bottom-up, top-down e Quicksort", h1))
 H(tabela([
-    ["Aspecto", "Mergesort bottom-up", "Mergesort top-down", "Quicksort (nosso)"],
-    ["Estratégia", "Junta blocos de 1, 2, 4, 8…", "Divide ao meio até 1, depois junta", "Escolhe pivô e separa menores/maiores"],
-    ["Recursão", "Não (dois laços)", "Sim, profundidade log n", "Sim, só no lado menor: log n"],
+    ["Aspecto", "Mergesort bottom-up", "Mergesort top-down", "Quicksort clássico (nosso)"],
+    ["Estratégia", "Junta blocos de 1, 2, 4, 8…", "Divide ao meio até 1, depois junta", "Pivô = elemento do meio; separa menores e maiores"],
+    ["Recursão", "Não (dois laços)", "Sim, profundidade log n", "Sim, nos dois lados"],
     ["Tempo (melhor / médio / pior)", "n log n / n log n / n log n", "n log n / n log n / n log n", "n log n / n log n / n²"],
-    ["Memória extra", "O(n): vetor auxiliar", "O(n) + pilha O(log n)", "O(log n): só a pilha"],
+    ["Memória extra", "O(n): vetor auxiliar", "O(n) + pilha O(log n)", "O(log n) em média: só a pilha"],
     ["Estável?", "Sim", "Sim", "Não"],
 ], [3.6 * cm, 4.5 * cm, 4.5 * cm, 4.4 * cm]))
 H(Spacer(1, 4))
