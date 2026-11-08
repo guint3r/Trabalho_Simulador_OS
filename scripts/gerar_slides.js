@@ -14,6 +14,10 @@ const RAIZ = path.join(__dirname, "..");
 const ASSETS = path.join(RAIZ, "apresentacao", "assets");
 const SAIDA = path.join(RAIZ, "apresentacao", "slides.pptx");
 const D = JSON.parse(fs.readFileSync(path.join(RAIZ, "artigo", "dados_artigo.json"), "utf8"));
+// Falas e integrantes vêm do roteiro (scripts/gerar_roteiro.py), para slides e roteiro nunca divergirem
+const ROTEIRO = JSON.parse(fs.readFileSync(path.join(RAIZ, "apresentacao", "roteiro.json"), "utf8"));
+let numSlide = 0;
+const notas = (slide, reserva) => { numSlide += 1; slide.addNotes(ROTEIRO.notas[String(numSlide)] || reserva); };
 
 // ---------------------------------------------------------------- dados
 const NS = D.tamanhos;
@@ -53,7 +57,7 @@ const CINZA = "4A5060";
 const pres = new pptxgen();
 pres.layout = "LAYOUT_WIDE"; // 13,333 x 7,5 pol (16:9, igual ao Canva)
 pres.title = "Mergesort × Quicksort";
-pres.author = "Jeferson Gomes Martins, João Vitor Gonçalves de Almeida, Juan Flor, Igor Jesus, Guilherme Silva";
+pres.author = ROTEIRO.integrantes.join(", ");
 pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
 const S = pres.SchemeColor;
 const FUNDO = path.join(ASSETS, "fundo.png");
@@ -161,11 +165,11 @@ async function main() {
   linha(s, [[1, 2, 3, 4, 5, 6, 7, 8, 9]], 6.35, 3.5, (v) => (v <= 4 ? ESTILO.merge : v === 5 ? ESTILO.pivo : ESTILO.quick), 0.62, 0.07, 0, 22);
   s.addText([
     { text: "Integrantes: ", options: { bold: true, color: S.text2 } },
-    { text: "Jeferson Gomes Martins · João Vitor Gonçalves de Almeida · Juan Flor · Igor Jesus · Guilherme Silva" },
+    { text: ROTEIRO.integrantes.join(" · ") },
   ], TXT({ x: 0.7, y: 5.2, w: 10.4, h: 0.95, fontSize: 20, objectName: "integrantes" }));
   s.addText("Estrutura de Dados · Prof. Me. Marcelo Goulart Souza · Centro Universitário UNIFACVEST",
     TXT({ x: 0.7, y: 6.55, w: 10.4, h: 0.4, fontSize: 16, color: CINZA, objectName: "disciplina" }));
-  s.addNotes("PESSOA 1 (0:00). Apresentar o grupo e o tema: comparamos dois algoritmos de ordenação, o Mergesort bottom-up e o Quicksort clássico, implementados em C++, medindo o tempo de 200 ordenações.");
+  notas(s, "PESSOA 1 (0:00). Apresentar o grupo e o tema: comparamos dois algoritmos de ordenação, o Mergesort bottom-up e o Quicksort clássico, implementados em C++, medindo o tempo de 200 ordenações.");
 
   // ===== 2. Como comparar ================================================================
   s = slideCanva("Como comparar algoritmos de ordenação?", "Abertura");
@@ -184,7 +188,7 @@ async function main() {
   s.addText("elementos", TXT({ x: 10.25, y: 1.8, w: 2.3, h: 0.4, fontSize: 18, color: CINZA, objectName: "rótulo elementos" }));
   s.addText([{ text: "× 20", options: { fontSize: 36, bold: true, color: S.accent3, breakLine: true } }, { text: "amostras cada", options: { fontSize: 18 } }],
     TXT({ x: 10.25, y: 2.4, w: 2.4, h: 1.2, objectName: "vinte amostras" }));
-  s.addNotes("PESSOA 1. Explicar a ideia do experimento: cinco tamanhos, de 30 a 300 mil números, 20 medições de cada, sempre com os mesmos dados para os dois algoritmos, como dar a mesma prova para todos os alunos.");
+  notas(s, "PESSOA 1. Explicar a ideia do experimento: cinco tamanhos, de 30 a 300 mil números, 20 medições de cada, sempre com os mesmos dados para os dois algoritmos, como dar a mesma prova para todos os alunos.");
 
   // ===== 3. Como medimos ===================================================================
   s = slideCanva("Como medimos", "Abertura");
@@ -211,7 +215,7 @@ async function main() {
     { text: "Python + Matplotlib: estatística e gráficos", options: { bullet: { indent: 18 }, breakLine: true } },
     { text: `Medições: servidor Linux, ${D.maquina.processador}`, options: { bullet: { indent: 18 } } },
   ], TXT({ x: 7.85, y: 1.85, w: 4.5, h: 4.5, fontSize: 19, paraSpaceAfter: 8, objectName: "ferramentas texto" }));
-  s.addNotes("PESSOA 1 (até 3:00). Passo a passo da medição. Para vetores pequenos, que ordenam em menos de 1 microssegundo, cada medição ordena vários vetores diferentes e divide o tempo. Se der, mostrar o PAINEL_ADM.bat rodando (opção 2) e a tabela da opção 11.");
+  notas(s, "PESSOA 1 (até 3:00). Passo a passo da medição. Para vetores pequenos, que ordenam em menos de 1 microssegundo, cada medição ordena vários vetores diferentes e divide o tempo. Se der, mostrar o PAINEL_ADM.bat rodando (opção 2) e a tabela da opção 11.");
 
   // ===== 4. Mergesort bottom-up =============================================================
   pres.addSection({ title: "Algoritmos" });
@@ -243,7 +247,7 @@ async function main() {
   pilula(s, 0.7, 6.25, 11.9, 0.6, [
     { text: "Complexidade: ", options: { color: S.text2 } }, { text: "O(n log n)", options: { bold: true, color: S.accent1 } },
     { text: " em qualquer caso  ·  Estável  ·  Usa memória auxiliar O(n)" }], "complexidade merge");
-  s.addNotes("PESSOA 2 (3:00 a 5:30). O bottom-up não divide nada: cada número já é um bloco ordenado. Em cada passada ele junta blocos vizinhos, comparando o primeiro de cada um, e a largura dobra: 2, 4, 8. Com 9 números são 4 passadas; com 300 mil, 19. Cada passada percorre tudo: n log n, sempre. Precisa de um vetor auxiliar e é estável.");
+  notas(s, "PESSOA 2 (3:00 a 5:30). O bottom-up não divide nada: cada número já é um bloco ordenado. Em cada passada ele junta blocos vizinhos, comparando o primeiro de cada um, e a largura dobra: 2, 4, 8. Com 9 números são 4 passadas; com 300 mil, 19. Cada passada percorre tudo: n log n, sempre. Precisa de um vetor auxiliar e é estável.");
 
   // ===== 5. Quicksort ========================================================================
   s = slideCanva(tituloDuo("Quicksort: ", "dividir em torno de um pivô"), "Algoritmos");
@@ -264,7 +268,7 @@ async function main() {
   pilula(s, 0.7, 6.25, 6.6, 0.6, [{ text: "Média: " }, { text: "O(n log n)", options: { bold: true, color: S.accent1 } },
     { text: "  •  pior caso: " }, { text: "O(n²)", options: { bold: true, color: S.accent3 } }], "complexidade quick");
   pilula(s, 7.5, 6.25, 5.1, 0.6, [{ text: "Ordena no próprio vetor", options: { bold: true, color: S.text2 } }], "in place");
-  s.addNotes("PESSOA 3 (5:30 a 8:30). O pivô é o 6, o elemento do meio. Um índice vem da esquerda procurando quem é maior ou igual a 6, outro vem da direita procurando quem é menor ou igual, e os dois trocam. Quando se cruzam, a esquerda tem 5 3 2 1 4 e a direita 6 8 9 7. Repete em cada lado. Não usa vetor extra.");
+  notas(s, "PESSOA 3 (5:30 a 8:30). O pivô é o 6, o elemento do meio. Um índice vem da esquerda procurando quem é maior ou igual a 6, outro vem da direita procurando quem é menor ou igual, e os dois trocam. Quando se cruzam, a esquerda tem 5 3 2 1 4 e a direita 6 8 9 7. Repete em cada lado. Não usa vetor extra.");
 
   // ===== 6. Complexidade ====================================================================
   s = slideCanva("Complexidade e desempenho", "Algoritmos");
@@ -283,7 +287,7 @@ async function main() {
     { text: `Com 300.000 itens: n log n ≈ ${br(ops[4].nlogn / 1e6, 1)} milhões de passos; n² ≈ ${br(ops[4].n2 / 1e9, 0)} bilhões.`, options: { bold: true } },
   ], 8.1, 1.7, 4.5, 3.4);
   await dica(s, 8.1, 5.15, 4.5, 1.4, "n² é uma festa de 300 mil pessoas em que todos cumprimentam todos.");
-  s.addNotes("PESSOA 3 (até 8:30). A teoria: os dois são n log n no caso médio, mas o Quicksort pode virar n ao quadrado se o pivô for sempre o menor ou o maior. Com 300 mil itens a diferença entre as curvas é de milhões contra bilhões de passos.");
+  notas(s, "PESSOA 3 (até 8:30). A teoria: os dois são n log n no caso médio, mas o Quicksort pode virar n ao quadrado se o pivô for sempre o menor ou o maior. Com 300 mil itens a diferença entre as curvas é de milhões contra bilhões de passos.");
 
   // ===== 7. Resultados ======================================================================
   pres.addSection({ title: "Resultados" });
@@ -316,7 +320,7 @@ async function main() {
     { text: "diferenças dentro da variação das medições", options: { fontSize: 18 } },
   ], TXT({ x: 9.65, y: 4.25, w: 2.75, h: 1.75, valign: "middle", objectName: "texto empate" }));
   s.addText("Tempos em milissegundos · mesmas entradas para os dois algoritmos", TXT({ x: 0.7, y: 6.0, w: 8.3, h: 0.4, fontSize: 16, color: CINZA, objectName: "nota tabela" }));
-  s.addNotes(`PESSOA 4 (8:30 a 11:30). Até 3 mil itens os dois empatam: a diferença é menor que a variação das medições. A partir de 30 mil o Quicksort ganha sempre: ${br(difQ(30000), 1)}% em 30 mil e ${br(difQ(300000), 1)}% em 300 mil. Uma piscada de olho dura uns 100 ms; os dois ordenam 300 mil números em menos de um terço disso.`);
+  notas(s, `PESSOA 4 (8:30 a 11:30). Até 3 mil itens os dois empatam: a diferença é menor que a variação das medições. A partir de 30 mil o Quicksort ganha sempre: ${br(difQ(30000), 1)}% em 30 mil e ${br(difQ(300000), 1)}% em 300 mil. Uma piscada de olho dura uns 100 ms; os dois ordenam 300 mil números em menos de um terço disso.`);
 
   // ===== 8. Estatística descritiva (300.000) =================================================
   s = slideCanva("Estatística descritiva: 300.000 dados", "Resultados");
@@ -341,7 +345,7 @@ async function main() {
       TXT({ x: x + 0.25, y: 4.2, w: 3.3, h: 1.25, valign: "middle", objectName: "estatística texto " + i }));
   });
   await dica(s, 0.7, 5.75, 11.9, 0.85, "a mediana é o aluno do meio da fila: não muda se um único aluno chegar muito atrasado.");
-  s.addNotes("PESSOA 4. A tabela segue o formato pedido: média, mediana, desvio padrão, variância, coeficiente de variação e máximo e mínimo. O CV mostra a variação em porcentagem da média. As tabelas dos cinco tamanhos estão no artigo.");
+  notas(s, "PESSOA 4. A tabela segue o formato pedido: média, mediana, desvio padrão, variância, coeficiente de variação e máximo e mínimo. O CV mostra a variação em porcentagem da média. As tabelas dos cinco tamanhos estão no artigo.");
 
   // ===== 9. Boxplot ========================================================================
   s = slideCanva("Boxplot: distribuição das 20 amostras", "Resultados");
@@ -349,7 +353,7 @@ async function main() {
   pilula(s, 0.7, 6.15, 11.9, 0.7, [
     { text: "Até 3.000: ", options: { bold: true, color: S.text2 } }, { text: "caixas se sobrepõem → empate.   " },
     { text: "30.000 e 300.000: ", options: { bold: true, color: S.accent3 } }, { text: "Quick mais baixo → mais rápido." }], "leitura boxplot");
-  s.addNotes("PESSOA 4 (até 11:30). Cada caixa vai do primeiro ao terceiro quartil e a linha do meio é a mediana. Onde as caixas se sobrepõem, consideramos empate. Em 30 mil as caixas se separam; em 300 mil a do Quicksort fica mais embaixo. Os pontinhos são medições atípicas, mais lentas por interferência do sistema.");
+  notas(s, "PESSOA 4 (até 11:30). Cada caixa vai do primeiro ao terceiro quartil e a linha do meio é a mediana. Onde as caixas se sobrepõem, consideramos empate. Em 30 mil as caixas se separam; em 300 mil a do Quicksort fica mais embaixo. Os pontinhos são medições atípicas, mais lentas por interferência do sistema.");
 
   // ===== 10. Crescimento ===================================================================
   s = slideCanva("O crescimento confirma n log n", "Resultados");
@@ -368,7 +372,7 @@ async function main() {
     s.addText(v, TXT({ x: 8.6, y, w: 4.0, h: 0.75, fontSize: 40, bold: true, color: cor, fontFace: THEME.headFontFace, objectName: "valor " + i }));
     s.addText(t, TXT({ x: 8.6, y: y + 0.75, w: 4.0, h: 0.6, fontSize: 18, objectName: "rótulo " + i }));
   });
-  s.addNotes("PESSOA 5 (11:30 a 14:00). Em escala log, as barras sobem em degraus quase iguais. Quando os dados crescem 10 vezes, o tempo cresceu entre 11 e 15 vezes, bem perto do que n log n prevê. Se fosse n ao quadrado, seriam 100 vezes.");
+  notas(s, "PESSOA 5 (11:30 a 14:00). Em escala log, as barras sobem em degraus quase iguais. Quando os dados crescem 10 vezes, o tempo cresceu entre 11 e 15 vezes, bem perto do que n log n prevê. Se fosse n ao quadrado, seriam 100 vezes.");
 
   // ===== 11. Outras entradas ================================================================
   s = slideCanva("Outros tipos de entrada (300.000 dados)", "Resultados");
@@ -388,7 +392,7 @@ async function main() {
   ], TXT({ x: 8.85, y: 1.7, w: 3.5, h: 2.0, valign: "middle", objectName: "texto entradas" }));
   marcadores(s, ["Em vetor já ordenado, o elemento do meio é o pivô ideal: quase nenhuma troca."], 8.6, 4.05, 4.0, 1.1, 18);
   await dica(s, 8.6, 5.3, 4.0, 1.3, "arrumar uma estante que já está quase em ordem é rápido.");
-  s.addNotes("PESSOA 5. Testamos também entradas que não são aleatórias, com a opção 3 do painel. O Quicksort ganhou nas quatro. Com o vetor já ordenado, o pivô do meio divide exatamente ao meio, por isso não cai no pior caso.");
+  notas(s, "PESSOA 5. Testamos também entradas que não são aleatórias, com a opção 3 do painel. O Quicksort ganhou nas quatro. Com o vetor já ordenado, o pivô do meio divide exatamente ao meio, por isso não cai no pior caso.");
 
   // ===== 12. Vantagens e desvantagens ======================================================
   pres.addSection({ title: "Conclusão" });
@@ -405,7 +409,7 @@ async function main() {
     s.addText(itens.map((it, i) => ({ text: it.text + it.b, options: { bullet: { indent: 18 }, breakLine: i < itens.length - 1, color: it.neg ? S.accent3 : S.text1 } })),
       TXT({ x: x + 0.4, y: 2.8, w: 5.1, h: 3.5, fontSize: 21, paraSpaceAfter: 14, objectName: "itens " + nome }));
   });
-  s.addNotes("PESSOA 5. Resumo dos dois lados: o Mergesort garante o tempo e é estável, mas gasta memória e faz cópias, por isso foi mais lento. O Quicksort foi mais rápido e usa pouca memória, mas depende de um bom pivô e não é estável.");
+  notas(s, "PESSOA 5. Resumo dos dois lados: o Mergesort garante o tempo e é estável, mas gasta memória e faz cópias, por isso foi mais lento. O Quicksort foi mais rápido e usa pouca memória, mas depende de um bom pivô e não é estável.");
 
   // ===== 13. Qual escolher + Obrigado =======================================================
   s = slideCanva("Qual algoritmo escolher?", "Conclusão");
@@ -426,7 +430,7 @@ async function main() {
     color: S.background1, fontSize: 20, bold: true, align: "center", valign: "middle", margin: 0, objectName: "placa quick" });
   s.addText([{ text: "garantia", options: { breakLine: true } }, { text: "e estabilidade" }], TXT({ x: 7.75, y: 3.25, w: 2.15, h: 0.8, fontSize: 17, align: "center", color: S.text2, objectName: "rótulo garantia" }));
   s.addText([{ text: "velocidade", options: { breakLine: true } }, { text: "e pouca memória" }], TXT({ x: 10.3, y: 3.25, w: 2.15, h: 0.8, fontSize: 17, align: "center", color: S.accent3, objectName: "rótulo velocidade" }));
-  s.addNotes("PESSOA 5 (até 14:00). Não existe algoritmo vencedor para tudo: o Quicksort é a escolha para velocidade, o Mergesort para garantia e estabilidade. Agradecer e abrir para perguntas (14:00 a 15:00); cada um responde sobre a sua parte.");
+  notas(s, "PESSOA 5 (até 14:00). Não existe algoritmo vencedor para tudo: o Quicksort é a escolha para velocidade, o Mergesort para garantia e estabilidade. Agradecer e abrir para perguntas (14:00 a 15:00); cada um responde sobre a sua parte.");
 
   fs.mkdirSync(path.dirname(SAIDA), { recursive: true });
   await pres.writeFile({ fileName: SAIDA });

@@ -34,7 +34,7 @@ echo.
 echo   RESULTADOS E APRESENTACAO
 echo     [4] Abrir relatorio (navegador)
 echo     [5] Abrir slides da apresentacao
-echo     [6] Abrir divisao do trabalho (PDF)
+echo     [6] Abrir roteiro de fala da apresentacao (PDF)
 echo     [10] Abrir material de estudo: Mergesort bottom-up (PDF)
 echo     [11] Exibir resultados em tabela detalhada
 echo.
@@ -131,7 +131,7 @@ if exist "apresentacao\slides.pptx" (start "" "apresentacao\slides.pptx") else (
 goto MENU
 
 :DIVISAO
-if exist "apresentacao\divisao_trabalho.pdf" (start "" "apresentacao\divisao_trabalho.pdf") else (echo. & echo   Arquivo apresentacao\divisao_trabalho.pdf nao encontrado. & pause)
+if exist "apresentacao\roteiro_de_fala.pdf" (start "" "apresentacao\roteiro_de_fala.pdf") else (echo. & echo   Arquivo apresentacao\roteiro_de_fala.pdf nao encontrado. & pause)
 goto MENU
 
 :RECOMPILAR
